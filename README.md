@@ -1,4 +1,9 @@
 # integers-at-point
+
+Relies on `number-at-point' et al from
+`thing-at-point-utils'
+
+
 Editing: raise or decrease positive integers at point
 
 `ar-raise-integer-in-region-maybe' takes all integers in

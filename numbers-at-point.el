@@ -1,10 +1,12 @@
-;;; integers-at-point.el -- Raise or decrease positive integers -*- lexical-binding: t; -*-
+;;; numbers-at-point.el -- Raise or decrease positive integers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2010-2016 Andreas Röhler, unless
 ;; indicated otherwise
 
 ;; Author: Andreas Röhler <andreas.roehler@easy-emacs.de>, unless
 ;; indicated otherwise
+
+;; Source: https://github.com/andreas-roehler/numbers-at-point.git
 
 ;; Keywords: convenience
 
@@ -137,5 +139,5 @@ Numbers are raised if STEP is positive, decreased otherwise"
 	  (exchange-point-and-mark))
       (ar-raise-integer-atpt step))))
 
-(provide 'integers-at-point)
-;;; integers-at-point.el ends here
+(provide 'numbers-at-point)
+;;; numbers-at-point.el ends here
