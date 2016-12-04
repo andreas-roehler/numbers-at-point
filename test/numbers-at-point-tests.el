@@ -62,28 +62,46 @@
 (ert-deftest ar-ert-integers-atpt-9 ()
   (ar-test-with-elisp-buffer
       "117 2"
-    (ar-raise-integer-in-region-maybe 1 (point-min) (point-max))
+    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
     (should (string= "118" (ar-number-atpt)))
     (goto-char (1- (point-max)))
     (should (string= "3" (ar-number-atpt)))))
 
-;; (ert-deftest ar-ert-integers-atpt-10 ()
-;;   (ar-test-with-elisp-buffer
-;;       "#x9 #xa"
-;;     (ar-raise-integer-in-region-maybe 1 (point-min) (point-max))
-;;     (should (string= "#xa" (ar-number-atpt)))
-;;     (goto-char (1- (point-max)))
-;;     (should (string= "#xb" (ar-number-atpt)))))
+(ert-deftest ar-ert-integers-atpt-13 ()
+  (ar-test-with-elisp-buffer
+      "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
+    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (goto-char (point-min))
+    (skip-chars-forward "^0-9") 
+    (should (string= "2" (ar-number-atpt)))
+    (forward-char 1) 
+    (skip-chars-forward "^0-9") 
+    (should (string= "3" (ar-number-atpt)))
+    (forward-char 1) 
+    (skip-chars-forward "^0-9") 
+    (should (string= "4" (ar-number-atpt)))))
 
-;; (ert-deftest ar-ert-integers-atpt-11 ()
-;;   (ar-test-with-elisp-buffer
-;;       "#o7 #xb"
-;;     (ar-raise-integer-in-region-maybe 1 (point-min) (point-max))
-;;     (should (string= "#o10" (ar-number-atpt)))
-;;     (goto-char (1- (point-max)))
-;;     (sit-for 0.1) 
-;;     (should (string= "#xc" (ar-number-atpt)))
-;;     (sit-for 0.1)))
+(ert-deftest ar-ert-integers-atpt-14 ()
+  (ar-test-with-elisp-buffer
+      "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
+    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (goto-char (point-min))
+    (skip-chars-forward "^0-9") 
+    (should (string= "2" (ar-number-atpt)))
+    (forward-char 1) 
+    (skip-chars-forward "^0-9") 
+    (should (string= "3" (ar-number-atpt)))
+    (forward-char 1) 
+    (skip-chars-forward "^0-9") 
+    (should (string= "4" (ar-number-atpt)))))
+
+(ert-deftest ar-ert-integers-backward-1 ()
+  (ar-test-with-elisp-buffer
+      "foo-1.txt\nfoo-2.txt"
+    (ar-backward-number-atpt)
+    (should (string= "2" (ar-number-atpt)))
+    (ar-backward-number-atpt)
+    (should (string= "1" (ar-number-atpt)))))
 
 (provide 'ar-thing-at-point-ert-tests)
 ;;; ar-thing-at-point-ert-tests.el ends here

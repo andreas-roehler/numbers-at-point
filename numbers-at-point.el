@@ -73,14 +73,14 @@ Default is 1"
   (interactive "*p")
   (ar-raise-integer-atpt (- step)))
 
-(defun ar-decrease-integer-in-region-maybe (&optional step)
+(defun ar-decrease-integers-in-region-maybe (&optional step)
   "Decrease positive integers at point according to STEP.
 
 Default is 1"
   (interactive "*p")
-  (ar-raise-integer-in-region-maybe (- step)
+  (ar-raise-integers-in-region-maybe (- step)
 				   ;; (called-interactively-p)
-				   (interactive-p) 
+				   (interactive-p)
 				   ))
 
 (defalias 'ar-add-to-number 'ar-raise-integer-atpt)
@@ -108,13 +108,30 @@ With negative STEP decrease value"
 	(when newval
 	  (ar-replace-integer-atpt newval beg end kind))))))
 
-(defun ar-raise-integer-in-region-maybe (&optional step beg end)
+(defun ar-raise-integers-in-region-maybe (&optional step beg end)
+  "With region-active-p raise/decrease integers in region.
+
+Call `ar-raise-integer-atpt' otherwise
+Numbers are raised if STEP is positive, decreased otherwise"
+  (interactive "p")
+  (ar-with-integers-in-region-maybe 'ar-raise-integer-atpt step beg end))
+
+(defun ar-raise-integers-cummulative-maybe (&optional step beg end)
+  "With region-active-p raise/decrease integers in region.
+
+Call `ar-raise-integer-atpt' otherwise
+Numbers are raised adding one STEP to STEP each, if STEP is positive, decreased otherwise"
+  (interactive "p")
+  (ar-with-integers-in-region-maybe 'ar-raise-integer-atpt step beg end t))
+
+(defun ar-with-integers-in-region-maybe (command &optional step beg end cummulative)
   "With region-active-p raise/decrease integers in region.
 
 Call `ar-raise-integer-atpt' otherwise
 Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
   (let ((step (or step 1))
+	(count step)
 	(beg (cond (beg)
 		   ((region-active-p)
 		    (region-beginning))))
@@ -129,15 +146,19 @@ Numbers are raised if STEP is positive, decreased otherwise"
 	  (unless (ar-number-atpt)(ar-forward-number-atpt))
 	  (while (and
 		  (prog1
-		      (ar-raise-integer-atpt step)
+		      ;; (ar-raise-integer-atpt step)
+		      (funcall command count)
 		    (forward-char 1))
 		  (ar-forward-number-atpt)
-		  (not (eobp))))
+		  (progn
+		    (when cummulative (setq count (+ count step)))
+		    (not (eobp)))))
 	  (goto-char beg)
 	  (push-mark)
 	  (goto-char end)
 	  (exchange-point-and-mark))
-      (ar-raise-integer-atpt step))))
+      ;; (ar-raise-integer-atpt step)
+      (funcall command step))))
 
 (provide 'numbers-at-point)
 ;;; numbers-at-point.el ends here
