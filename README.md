@@ -1,3 +1,6 @@
+Numbers at point [![Build Status](https://travis-ci.org/emacs-berlin/numbers-at-point.svg?branch=master)](https://travis-ci.org/emacs-berlin/numbers-at-point)
+===
+
 # integers-at-point
 
 Relies on `number-at-point' et al from
