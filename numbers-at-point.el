@@ -80,7 +80,7 @@ Default is 1"
   (interactive "*p")
   (ar-raise-integers-in-region-maybe (- step)
 				   ;; (called-interactively-p)
-				   (interactive-p)
+				     ;; (interactive-p)
 				   ))
 
 (defalias 'ar-add-to-number 'ar-raise-integer-atpt)
