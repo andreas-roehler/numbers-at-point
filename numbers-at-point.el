@@ -30,7 +30,7 @@
 ;;; Code:
 
 (require 'beg-end)
-(require 'thingatpt-utils-base)
+(require 'thingatpt-utils-core)
 (require 'thing-at-point-utils)
 
 (defun ar-add-to-integer-and-forward (&optional step)
