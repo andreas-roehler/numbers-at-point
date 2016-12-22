@@ -28,11 +28,11 @@ TESTDIR1=$DIR3/test
 
 FILE1=$WERKSTATT/$DIR1/beg-end.el
 FILE2=$WERKSTATT/$DIR1/ar-subr.el
-FILE4=$WERKSTATT/$DIR1/thingatpt-utils-base.el
+FILE4=$WERKSTATT/$DIR1/thingatpt-utils-core.el
 FILE5=$WERKSTATT/$DIR2/thing-at-point-utils.el
 FILE6=$WERKSTATT/$DIR3/numbers-at-point.el
 
-TEST1=$WERKSTATT/$TESTDIR1/ar-setup-ert-tests.el
+TEST1=$WERKSTATT/$TESTDIR1/ar-setup-tests.el
 TEST2=$WERKSTATT/$TESTDIR1/numbers-at-point-tests.el
 
 if [ -s emacs24 ]; then
