@@ -29,7 +29,7 @@
   (ar-test-with-elisp-buffer
       "#x9"
     (forward-char -1)
-    (ar-raise-integer-atpt)
+    (ar-shift-atpt)
     (sit-for 1)
     (should (string= "#xa" (ar-number-atpt)))))
 

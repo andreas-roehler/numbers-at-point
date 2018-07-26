@@ -30,9 +30,10 @@
 
 ;;; Code:
 
-;; (require 'beg-end)
-;; (require 'thingatpt-utils-core)
-;; (require 'thing-at-point-utils)
+(require 'ar-subr)
+(require 'beg-end)
+(require 'thingatpt-utils-core)
+(require 'thing-at-point-utils)
 
 (defun ar-add-to-integer-and-forward (&optional step)
   (interactive "p*")
@@ -75,18 +76,6 @@
 Default is 1"
   (interactive "*p")
   (ar-shift-atpt (- step)))
-
-(defun ar-decrease-in-region-maybe (&optional step)
-  "Decrease integers at point according to STEP.
-
-Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
-
-Default is 1"
-  (interactive "*p")
-  (ar-raise-in-region-maybe (- step)
-				   ;; (called-interactively-p)
-				     ;; (interactive-p)
-))
 
 (defun ar--shift-symbol-down (symbol)
   (cond ((stringp symbol)
@@ -188,6 +177,19 @@ Call `ar-shift-atpt' otherwise
 Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
   (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end))
+
+
+(defun ar-decrease-in-region-maybe (&optional step)
+  "Decrease integers at point according to STEP.
+
+Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
+
+Default is 1"
+  (interactive "*p")
+  (ar-raise-in-region-maybe (- step)
+				   ;; (called-interactively-p)
+				     ;; (interactive-p)
+))
 
 (defun ar-raise-kummulative-maybe (&optional step beg end)
   "With use-region-p raise/decrease integers in region.

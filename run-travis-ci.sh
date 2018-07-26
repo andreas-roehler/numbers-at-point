@@ -53,6 +53,9 @@ entfernt () {
 --eval "(add-to-list 'load-path (getenv \"TESTDIR1\"))" \
 -load $FILE1 \
 -load $FILE2 \
+-load $FILE4 \
+-load $FILE5 \
+-load $FILE6 \
 \
 -load $TEST1 \
 -f ert-run-tests-batch-and-exit

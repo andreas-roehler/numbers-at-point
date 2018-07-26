@@ -25,6 +25,7 @@
 
 ;;; Code:
 
+(require 'numbers-at-point)
 
 (defvar ar-switch-p nil
   "Switch into test-buffer.")
@@ -85,14 +86,6 @@ BODY is code to be executed within the temp buffer.  Point is
     (forward-char -1)
     (ar-shift-atpt)
     (should (string= "118" (ar-number-atpt)))))
-
-;; (ert-deftest number-at-point-integers-atpt-7 ()
-;;   (ar-test-with-elisp-buffer
-;;       "#x9"
-;;     (forward-char -1)
-;;     (ar-raise-integer-atpt)
-;;     (sit-for 1)
-;;     (should (string= "#xa" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-8 ()
   (ar-test-with-elisp-buffer
