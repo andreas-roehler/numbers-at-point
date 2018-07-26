@@ -18,22 +18,13 @@
 
 # Code:
 
-WERKSTATT=$HOME/werkstatt
+FILE1=beg-end.el
+FILE2=ar-subr.el
+FILE4=thingatpt-utils-core.el
+FILE5=thing-at-point-utils.el
+FILE6=numbers-at-point.el
 
-DIR1=$HOME/werkstatt/thingatpt-utils-core
-DIR2=$HOME/werkstatt/thing-at-point-utils
-DIR3=$HOME/werkstatt/numbers-at-point
-
-TESTDIR1=$DIR3/test
-
-FILE1=$DIR1/beg-end.el
-FILE2=$DIR1/ar-subr.el
-FILE4=$DIR1/thingatpt-utils-core.el
-FILE5=$DIR2/thing-at-point-utils.el
-FILE6=$DIR3/numbers-at-point.el
-
-TEST1=$TESTDIR1/ar-setup-tests.el
-TEST2=$TESTDIR1/numbers-at-point-tests.el
+TEST1=test/numbers-at-point-tests.el
 
 if [ -s emacs24 ]; then
     EMACS=emacs24
@@ -46,9 +37,6 @@ echo "\$EMACS: $EMACS"
 hier () {
     $EMACS -Q --batch \
 --eval "(message (emacs-version))" \
---eval "(add-to-list 'load-path (getenv \"DIR1\"))" \
---eval "(add-to-list 'load-path (getenv \"DIR2\"))" \
---eval "(add-to-list 'load-path (getenv \"DIR3\"))" \
 -load $FILE1 \
 -load $FILE2 \
 -load $FILE4 \
@@ -56,33 +44,51 @@ hier () {
 -load $FILE6 \
 \
 -load $TEST1 \
--load $TEST2 \
 -f ert-run-tests-batch-and-exit
 }
 
 entfernt () {
     $EMACS -Q --batch \
 --eval "(message (emacs-version))" \
---eval "(add-to-list 'load-path (getenv \"WERKSTATT/\"))" \
---eval "(add-to-list 'load-path (getenv \"DIR1\"))" \
 --eval "(add-to-list 'load-path (getenv \"TESTDIR1\"))" \
 -load $FILE1 \
 -load $FILE2 \
 \
 -load $TEST1 \
--load $TEST2 \
--load $TEST3 \
 -f ert-run-tests-batch-and-exit
 }
 
+ORT=${ORT:-1}
+
+echo "\$ORT: $ORT"
 
 if [ $ORT -eq 0 ]; then
+
+    echo "cp -u $HOME/werkstatt/thingatpt-utils-core/ar-subr.el $PWD"
+    cp -u $HOME/werkstatt/thingatpt-utils-core/ar-subr.el $PWD
+    echo "cp -u $HOME/werkstatt/thingatpt-utils-core/beg-end.el $PWD"
+    cp -u $HOME/werkstatt/thingatpt-utils-core/beg-end.el $PWD
+    cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-map.el $PWD
+    echo "cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-map.el $PWD"
+    cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-core.el $PWD
+
+    echo "cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-core.el $PWD"
+    cp -u $HOME/werkstatt/thing-at-point-utils/thing-at-point-utils.el $PWD
+
+    echo "cp -u $HOME/werkstatt/thing-at-point-utils/thing-at-point-utils.el $PWD"
     hier
-    echo "Lade Umgebung \"hier\""
+    echo "Lade hier"
 else
-    echo "entfernt"
-    echo "Lade Umgebung \"entfernt\""
+    echo "Lade entfernt"
+    entfernt
 fi
+# if [ $ORT -eq 0 ]; then
+#     hier
+#     echo "Lade Umgebung \"hier\""
+# else
+#     echo "entfernt"
+#     echo "Lade Umgebung \"entfernt\""
+# fi
 
 # -load $FILE3 \
 

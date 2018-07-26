@@ -1,4 +1,4 @@
-;;; numbers-at-point-tests.el -- more tests -*- lexical-binding: t; -*- 
+;;; numbers-at-point-tests.el -- more tests -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2010-2016 Andreas Röhler, unless
 ;; indicated otherwise
@@ -25,6 +25,48 @@
 
 ;;; Code:
 
+
+(defvar ar-switch-p nil
+  "Switch into test-buffer.")
+
+(defcustom ar-switch-p nil
+  ""
+  :type 'boolean
+  :group 'werkstatt)
+
+(defun ar-toggle-switch-p ()
+  "Toggle `ar-switch-p'. "
+  (interactive)
+  (setq ar-switch-p (not ar-switch-p))
+  (message "ar-switch-p: %s"  ar-switch-p))
+
+(defmacro ar-test-with-elisp-buffer (contents &rest body)
+  "Create temp buffer in `emacs-lisp-mode' inserting CONTENTS.
+BODY is code to be executed within the temp buffer.  Point is
+ at the end of buffer."
+  `(with-temp-buffer
+     (let (hs-minor-mode)
+       (emacs-lisp-mode)
+       (insert ,contents)
+       (when ar-switch-p
+	 (switch-to-buffer (current-buffer)))
+       (font-lock-fontify-region (point-min) (point-max))
+       ,@body)))
+
+(defmacro ar-test-with-elisp-buffer-point-min (contents &rest body)
+  "Create temp buffer inserting CONTENTS.
+BODY is code to be executed within the temp buffer.  Point is
+ at the end of buffer."
+  `(with-temp-buffer
+     (let (hs-minor-mode)
+       (insert ,contents)
+       (emacs-lisp-mode)
+       (goto-char (point-min))
+       (when ar-switch-p
+	 (switch-to-buffer (current-buffer)))
+       (font-lock-fontify-region (point-min) (point-max))
+       ,@body)))
+
 (ert-deftest number-at-point-integers-atpt-4 ()
   (ar-test-with-elisp-buffer
       "#x75"
@@ -49,7 +91,7 @@
 ;;       "#x9"
 ;;     (forward-char -1)
 ;;     (ar-raise-integer-atpt)
-;;     (sit-for 1) 
+;;     (sit-for 1)
 ;;     (should (string= "#xa" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-8 ()
@@ -72,13 +114,13 @@
       "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
     (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (goto-char (point-min))
-    (skip-chars-forward "^0-9") 
+    (skip-chars-forward "^0-9")
     (should (string= "2" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "3" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "4" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-14 ()
@@ -86,13 +128,13 @@
       "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
     (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (goto-char (point-min))
-    (skip-chars-forward "^0-9") 
+    (skip-chars-forward "^0-9")
     (should (string= "2" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "3" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "4" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-backward-1 ()
