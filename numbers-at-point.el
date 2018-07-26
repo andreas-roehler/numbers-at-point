@@ -1,4 +1,4 @@
-;;; numbers-at-point.el -- Raise or decrease positive integers -*- lexical-binding: t; -*-
+;;; numbers-at-point.el --- Raise or decrease positive integers -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2010-2016 Andreas Röhler, unless
 ;; indicated otherwise
@@ -6,6 +6,7 @@
 ;; Author: Andreas Röhler <andreas.roehler@easy-emacs.de>, unless
 ;; indicated otherwise
 
+;; Version: 0.1
 ;; Source: https://github.com/andreas-roehler/numbers-at-point.git
 
 ;; Keywords: convenience
@@ -29,9 +30,9 @@
 
 ;;; Code:
 
-(require 'beg-end)
-(require 'thingatpt-utils-core)
-(require 'thing-at-point-utils)
+;; (require 'beg-end)
+;; (require 'thingatpt-utils-core)
+;; (require 'thing-at-point-utils)
 
 (defun ar-add-to-integer-and-forward (&optional step)
   (interactive "p*")
@@ -42,7 +43,7 @@
        (re-search-forward "#x[a-f0-9]\\|#o[0-9]\\|[0-9]" nil t 1)
        (forward-char -1)))
     (when
-	(and (not (eobp)) (ar-raise-integer-atpt step))
+	(and (not (eobp)) (ar-shift-atpt step))
       (forward-char 1)
       (and (re-search-forward "#x[a-f0-9]\\|#o[0-9]\\|[0-9]" nil t 1)
 	   (forward-char -1)))))
@@ -57,12 +58,14 @@
 	 "o")
 	(t "d")))
 
-(defun ar-replace-integer-atpt (newval beg end kind)
+(defun ar-replace-atpt (newval beg end kind)
   (let (erg)
     (delete-region beg end)
-    (if (string= "d" kind)
-	(insert (setq erg (format (concat "%" kind) newval)))
-      (insert (setq erg (concat "#" kind (format (concat "%" kind) newval)))))
+    (pcase kind
+      ("d"
+       (insert (setq erg (format (concat "%" kind) newval))))
+      ("s" (insert (setq erg (format (concat "%" kind) newval))))
+      (_ (insert (setq erg (concat "#" kind (format (concat "%" kind) newval))))))
     (forward-char -1)
     erg))
 
@@ -71,72 +74,142 @@
 
 Default is 1"
   (interactive "*p")
-  (ar-raise-integer-atpt (- step)))
+  (ar-shift-atpt (- step)))
 
-(defun ar-decrease-integers-in-region-maybe (&optional step)
-  "Decrease positive integers at point according to STEP.
+(defun ar-decrease-in-region-maybe (&optional step)
+  "Decrease integers at point according to STEP.
+
+Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
 
 Default is 1"
   (interactive "*p")
-  (ar-raise-integers-in-region-maybe (- step)
+  (ar-raise-in-region-maybe (- step)
 				   ;; (called-interactively-p)
 				     ;; (interactive-p)
-				   ))
+))
 
-(defalias 'ar-add-to-number 'ar-raise-integer-atpt)
-(defun ar-raise-integer-atpt (&optional step iact)
-  "Raise positive integer at point according to STEP.
+(defun ar--shift-symbol-down (symbol)
+  (cond ((stringp symbol)
+	 (cond
+	  ((eq 1 (length symbol))
+	   (char-to-string (1- (string-to-char symbol))))
+	  ((string-match "^[0-9]+$" symbol)
+	   (prin1-to-string (1+ (car (read-from-string symbol)))))
+	  (t symbol)))
+	((eq 97 symbol)
+	 ;; if at char `a', follow up with `z'
+	 122)
+	((eq symbol 65)
+	 ;; if at char `A', follow up with `Z'
+	 90)
+	((and (< symbol 123)(< 96 symbol))
+	 (1- symbol))
+	((and (< symbol 133)(< 64 symbol))
+	 (1- symbol))
+	;; raise until number 9
+	((and (< 47 symbol)(< symbol 57))
+	 (1- symbol))
+	(t (prin1-to-string (1+ (car (read-from-string (char-to-string symbol))))))))
+
+(defun ar--shift-symbol-up (symbol)
+  (cond
+   ((stringp symbol)
+    (cond
+     ((eq 1 (length symbol))
+      (char-to-string (1+ (string-to-char symbol))))
+     ((string-match "^[0-9]+$" symbol)
+      (prin1-to-string (1+ (car (read-from-string symbol)))))
+     (t symbol)))
+   ((eq 122 symbol)
+    ;; if at char `z', follow up with `a'
+    97)
+   ((eq symbol 90)
+    65)
+   ((and (< symbol 123)(< 96 symbol))
+    (1+ symbol))
+   ((and (< symbol 133)(< 64 symbol))
+    (1+ symbol))
+   ;; raise until number 9
+   ((and (< 47 symbol)(< symbol 57))
+    (1+ symbol))
+   (t (prin1-to-string (1+ (car (read-from-string (char-to-string symbol))))))))
+
+(defun ar--shift-symbol (symbol step)
+  "Return the symbol following in asci
+
+if SYMBOL is a decimal-value.
+If at char `z', follow up with `a'
+
+If arg SYMBOL is a string, raise according to value"
+  (dotimes (i (abs step) erg)
+    (if (< 0 step)
+	(setq erg (ar--shift-symbol-up symbol))
+      (setq erg (ar--shift-symbol-down symbol)))))
+
+
+(defun ar-raise-number-intern (step strg)
+  "Return raised value."
+  (let* ()
+    (cond ((and (string-match "^#?[xXo]?0" strg)
+		(< step 0))
+	   (error "Only positive integers may be decrecased here"))
+	  (t (+ (car (read-from-string strg)) step)))))
+
+(defalias 'ar-add-to-number 'ar-shift-atpt)
+(defun ar-shift-atpt (&optional step iact)
+  "Shift integer or char at point according to STEP.
 
 Default is 1
 
-With negative STEP decrease value"
+With negative STEP decrease value
+Shift \"y\" to \"a\".
+"
   (interactive "*p")
-  (let ((iact (or iact (called-interactively-p 'any)))
-	(inhibit-point-motion-hooks t)
-	(bounds (ar-bounds-of-number-atpt)))
-    (when bounds
-      (let* ((step (or step 1))
-	     (beg (car bounds))
-	     (end (cdr bounds))
-	     (strg (buffer-substring beg end))
-	     (kind (ar-raise-kind-of-integer strg))
-	     (newval
-	      (if (and (string-match "^#?[xXo]?0" strg)
-		       (< step 0))
-		  (when iact (message "Only positive integers may be decreased here"))
-		(+ (car (read-from-string strg)) step))))
-	(when newval
-	  (ar-replace-integer-atpt newval beg end kind))))))
+  (let* ((iact (or iact (called-interactively-p 'any)))
+	 (inhibit-point-motion-hooks t)
+	 (numberbounds (ar-bounds-of-number-atpt))
+	 (bounds (or numberbounds (ar-bounds-of-char-atpt)))
+	 (beg (car bounds))
+         (end (cdr bounds))
+	 (strg (buffer-substring-no-properties beg end))
+	 (step (or step 1))
+	 kind newval)
+    (cond (numberbounds
+	   (setq kind (ar-raise-kind-of-integer strg))
+	   (setq newval (ar-raise-number-intern step strg))
+	   (ar-replace-atpt newval beg end kind))
+	  (t (setq newval (char-to-string (ar--shift-symbol (string-to-char strg) step)))
+	     (ar-replace-atpt newval beg end "s")))))
 
-(defun ar-raise-integers-in-region-maybe (&optional step beg end)
-  "With region-active-p raise/decrease integers in region.
+(defun ar-raise-in-region-maybe (&optional step beg end)
+  "With use-region-p raise/decrease integers in region.
 
-Call `ar-raise-integer-atpt' otherwise
+Call `ar-shift-atpt' otherwise
 Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
-  (ar-with-integers-in-region-maybe 'ar-raise-integer-atpt step beg end))
+  (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end))
 
-(defun ar-raise-integers-cummulative-maybe (&optional step beg end)
-  "With region-active-p raise/decrease integers in region.
+(defun ar-raise-kummulative-maybe (&optional step beg end)
+  "With use-region-p raise/decrease integers in region.
 
-Call `ar-raise-integer-atpt' otherwise
+Call `ar-shift-atpt' otherwise
 Numbers are raised adding one STEP to STEP each, if STEP is positive, decreased otherwise"
   (interactive "p")
-  (ar-with-integers-in-region-maybe 'ar-raise-integer-atpt step beg end t))
+  (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end t))
 
 (defun ar-with-integers-in-region-maybe (command &optional step beg end cummulative)
-  "With region-active-p raise/decrease integers in region.
+  "With use-region-p raise/decrease integers in region.
 
-Call `ar-raise-integer-atpt' otherwise
+Call `ar-shift-atpt' otherwise
 Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
   (let ((step (or step 1))
 	(count step)
 	(beg (cond (beg)
-		   ((region-active-p)
+		   ((use-region-p)
 		    (region-beginning))))
 	(end (cond (end)
-		   ((region-active-p)
+		   ((use-region-p)
 		    (copy-marker (region-end))))))
     (if
 	(and beg end)
@@ -146,7 +219,7 @@ Numbers are raised if STEP is positive, decreased otherwise"
 	  (unless (ar-number-atpt)(ar-forward-number-atpt))
 	  (while (and
 		  (prog1
-		      ;; (ar-raise-integer-atpt step)
+		      ;; (ar-shift-atpt step)
 		      (funcall command count)
 		    (forward-char 1))
 		  (ar-forward-number-atpt)
@@ -157,7 +230,7 @@ Numbers are raised if STEP is positive, decreased otherwise"
 	  (push-mark)
 	  (goto-char end)
 	  (exchange-point-and-mark))
-      ;; (ar-raise-integer-atpt step)
+      ;; (ar-shift-atpt step)
       (funcall command step))))
 
 (provide 'numbers-at-point)

@@ -36,7 +36,7 @@
 (ert-deftest ar-ert-integers-atpt-10 ()
   (ar-test-with-elisp-buffer
       "#x9 #xa"
-    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (should (string= "#xa" (ar-number-atpt)))
     (goto-char (1- (point-max)))
     (should (string= "#xb" (ar-number-atpt)))))
@@ -44,7 +44,7 @@
 (ert-deftest ar-ert-integers-atpt-11 ()
   (ar-test-with-elisp-buffer
       "#o7 #xb"
-    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (should (string= "#o10" (ar-number-atpt)))
     (goto-char (1- (point-max)))
     (sit-for 0.1)
@@ -55,8 +55,8 @@
   (ar-test-with-elisp-buffer
       "foo#x9bar"
     (forward-char -4) 
-    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (should (string= "foo#xabar" (ar-number-atpt)))))
 
-(provide 'ar-thing-at-point-ert-tests)
-;;; ar-thing-at-point-ert-tests.el ends here
+(provide 'numbers-at-point-interactive-tests)
+;;; numbers-at-point-interactive-tests.el ends here

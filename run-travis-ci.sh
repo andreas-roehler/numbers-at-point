@@ -20,20 +20,20 @@
 
 WERKSTATT=$HOME/werkstatt
 
-DIR1=thingatpt-utils-core
-DIR2=thing-at-point-utils
-DIR3=numbers-at-point
+DIR1=$HOME/werkstatt/thingatpt-utils-core
+DIR2=$HOME/werkstatt/thing-at-point-utils
+DIR3=$HOME/werkstatt/numbers-at-point
 
 TESTDIR1=$DIR3/test
 
-FILE1=$WERKSTATT/$DIR1/beg-end.el
-FILE2=$WERKSTATT/$DIR1/ar-subr.el
-FILE4=$WERKSTATT/$DIR1/thingatpt-utils-core.el
-FILE5=$WERKSTATT/$DIR2/thing-at-point-utils.el
-FILE6=$WERKSTATT/$DIR3/numbers-at-point.el
+FILE1=$DIR1/beg-end.el
+FILE2=$DIR1/ar-subr.el
+FILE4=$DIR1/thingatpt-utils-core.el
+FILE5=$DIR2/thing-at-point-utils.el
+FILE6=$DIR3/numbers-at-point.el
 
-TEST1=$WERKSTATT/$TESTDIR1/ar-setup-tests.el
-TEST2=$WERKSTATT/$TESTDIR1/numbers-at-point-tests.el
+TEST1=$TESTDIR1/ar-setup-tests.el
+TEST2=$TESTDIR1/numbers-at-point-tests.el
 
 if [ -s emacs24 ]; then
     EMACS=emacs24
@@ -46,6 +46,9 @@ echo "\$EMACS: $EMACS"
 hier () {
     $EMACS -Q --batch \
 --eval "(message (emacs-version))" \
+--eval "(add-to-list 'load-path (getenv \"DIR1\"))" \
+--eval "(add-to-list 'load-path (getenv \"DIR2\"))" \
+--eval "(add-to-list 'load-path (getenv \"DIR3\"))" \
 -load $FILE1 \
 -load $FILE2 \
 -load $FILE4 \
