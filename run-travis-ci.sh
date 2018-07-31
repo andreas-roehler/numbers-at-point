@@ -69,17 +69,18 @@ if [ $ORT -eq 0 ]; then
 
     echo "cp -u $HOME/werkstatt/thingatpt-utils-core/ar-subr.el $PWD"
     cp -u $HOME/werkstatt/thingatpt-utils-core/ar-subr.el $PWD
+
     echo "cp -u $HOME/werkstatt/thingatpt-utils-core/beg-end.el $PWD"
     cp -u $HOME/werkstatt/thingatpt-utils-core/beg-end.el $PWD
-    cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-map.el $PWD
-    echo "cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-map.el $PWD"
+
     cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-core.el $PWD
-
     echo "cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-core.el $PWD"
-    cp -u $HOME/werkstatt/thing-at-point-utils/thing-at-point-utils.el $PWD
 
+    cp -u $HOME/werkstatt/thing-at-point-utils/thing-at-point-utils.el $PWD
     echo "cp -u $HOME/werkstatt/thing-at-point-utils/thing-at-point-utils.el $PWD"
+
     hier
+
     echo "Lade hier"
 else
     echo "Lade entfernt"

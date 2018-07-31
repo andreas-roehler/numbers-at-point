@@ -46,7 +46,7 @@
 BODY is code to be executed within the temp buffer.  Point is
  at the end of buffer."
   `(with-temp-buffer
-     (let (hs-minor-mode)
+     (let (hs-minor-mode thing-copy-region)
        (emacs-lisp-mode)
        (insert ,contents)
        (when ar-switch-p
@@ -59,7 +59,7 @@ BODY is code to be executed within the temp buffer.  Point is
 BODY is code to be executed within the temp buffer.  Point is
  at the end of buffer."
   `(with-temp-buffer
-     (let (hs-minor-mode)
+     (let (hs-minor-mode thing-copy-region)
        (insert ,contents)
        (emacs-lisp-mode)
        (goto-char (point-min))
