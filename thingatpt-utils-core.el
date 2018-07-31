@@ -1479,19 +1479,16 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Comment
 (put 'comment 'beginning-op-at
      (lambda ()
-       (let* ((orig (point))
-              (nesting (not (or (string= "" comment-end)(eq 10 comment-end))))
+       (let* ((nesting (not (or (string= "" comment-end)(eq 10 comment-end))))
               (erg (when nesting
                      (if (looking-at comment-start)
                          (cons (match-beginning 0) (match-end 0))
-                       (beginning-of-form-base comment-start comment-end nil 'move 1 t))))
-              last)
+                       (beginning-of-form-base comment-start comment-end nil 'move 1 t)))))
          (unless erg
            (when (looking-at comment-start)
 	     (setq erg (cons (match-beginning 0) (match-end 0)))
 	     (skip-chars-backward " \t\r\n\f"))
-           (while (and (setq last (point))
-                       (setq erg (nth 8 (syntax-ppss)))
+           (while (and (setq erg (nth 8 (syntax-ppss)))
                        (goto-char erg)
                        (skip-chars-backward " \t\r\n\f")))
            (skip-chars-forward " \t\r\n\f")
@@ -1614,8 +1611,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 (put 'delimited 'beginning-op-at
      (lambda ()
        (let ((begdel (concat th-beg-delimiter ar-delimiters-atpt))
-	     (pps (syntax-ppss))
-	     erg)
+	     (pps (syntax-ppss)))
          (cond ((nth 8 pps)
 		(or
 		 ;; don't go to start in string
@@ -1661,16 +1657,17 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 	 (ar--delimited-beginning-finish begdel))))
 
 (defun ar--delimited-beginning-finish (begdel)
-  (if
-      (looking-at (concat "[" begdel "]"))
-      (progn
-	(ar-set-delimiter-zeichen)
-	(when (< 0 (setq erg (abs (skip-chars-backward (char-to-string ar-delimiter-zeichen-atpt)))))
-	  (setq ar-delimiter-string-atpt (buffer-substring-no-properties (point) (+ erg (point) 1))))
-	(cons (match-beginning 0) (match-end 0))
-	)
-    (setq ar-delimiter-zeichen-atpt nil)
-    (setq ar-delimiter-string-atpt nil)))
+  (let (erg)
+    (if
+	(looking-at (concat "[" begdel "]"))
+	(progn
+	  (ar-set-delimiter-zeichen)
+	  (when (< 0 (setq erg (abs (skip-chars-backward (char-to-string ar-delimiter-zeichen-atpt)))))
+	    (setq ar-delimiter-string-atpt (buffer-substring-no-properties (point) (+ erg (point) 1))))
+	  (cons (match-beginning 0) (match-end 0))
+	  )
+      (setq ar-delimiter-zeichen-atpt nil)
+      (setq ar-delimiter-string-atpt nil))))
 
 (defun ar-delimited-end-intern ()
   (if (< (- (match-end 0) (match-beginning 0)) 2)
@@ -1734,7 +1731,8 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 		       ar-delimiter-zeichen-atpt))
 
 		    (ar-delimiter-string-atpt)
-		    (t (concat th-end-delimiter ar-delimiters-atpt opener closer erg)))))
+		    (t (concat th-end-delimiter ar-delimiters-atpt))))
+             opener closer erg)
 	 (or
 	  (setq erg (ar-delimited-end-from-openening begdel enddel))
 	  (unless (eobp)
@@ -2092,38 +2090,34 @@ Otherwise assume being behind an opening delimiter or at a closing "
      (lambda ()
        (unless (eobp)
 	 (let ((case-fold-search t)
-	       erg)
-	   (cond ((looking-at "#[0-9a-fA-F]+|x[0-9]+")
-		  (forward-char 2)
-		  (skip-chars-forward "0-9a-f" (line-end-position))
-		  (and (< 0 (skip-chars-forward "^0-9"))(point)))
+	       (orig (point))
+	       (erg
+		(cond ((looking-at "#[0-9a-fA-F]+|x[0-9]+")
+		       (forward-char 2)
+		       (skip-chars-forward "0-9a-f" (line-end-position))
+		       (and (< 0 (skip-chars-forward "^0-9"))(point)))
+		      ((looking-at "#o[0-9]+")
+		       (forward-char 2)
+		       (skip-chars-forward "0-9" (line-end-position))
+		       (and (< 0 (skip-chars-forward "^0-9"))(point)))
+		      ((looking-at "[0-9]+")
+		       (skip-chars-forward "0-9" (line-end-position))
+		       (and (< 0 (skip-chars-forward "^0-9"))(point)))
+		      (t
+		       (while
+			   (and
+			    (re-search-forward "#x[a-fA-F0-9]+\\|#o[0-8]+\\|[0-9]+" nil t 1)
+			    (nth 8 (parse-partial-sexp (point-min) (point)))))
+		       (when (ignore-errors (match-beginning 0))
+			 (goto-char (match-beginning 0)))))))
+	   (cond ((looking-at "#[xX][a-fA-F0-9]+")
+		  (setq erg (point)))
 		 ((looking-at "#o[0-9]+")
-		  (forward-char 2)
-		  (skip-chars-forward "0-9" (line-end-position))
-		  (and (< 0 (skip-chars-forward "^0-9"))(point)))
+		  (setq erg (point)))
 		 ((looking-at "[0-9]+")
-		  (skip-chars-forward "0-9" (line-end-position))
-		  (and (< 0 (skip-chars-forward "^0-9"))(point)))
-		 (t
-		  (while
-		      (and
-                       (re-search-forward "#x[a-fA-F0-9]+\\|#o[0-8]+\\|[0-9]+" nil t 1)
-		       (nth 8 (parse-partial-sexp (point-min) (point)))))
-		  (when (ignore-errors (match-beginning 0))
-		    (goto-char (match-beginning 0)))
-		  (cond ((looking-at "#[xX][a-fA-F0-9]+")
-			 (setq erg (point))
-			 nil)
-			((looking-at "#o[0-9]+")
-			 (setq erg (point))
-			 nil)
-			((looking-at "[0-9]+")
-			 (setq erg (point))
-			 nil)
-			(t (forward-char 1)
-			   (unless (eobp)
-			     (forward-char 1)
-			     (not (eobp)))))))
+		  (setq erg (point)))
+		 ((eobp)
+		  (setq erg nil)))
 	   erg))))
 
 (put 'number 'backward-op-at
