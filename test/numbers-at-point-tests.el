@@ -71,26 +71,22 @@ BODY is code to be executed within the temp buffer.  Point is
 (ert-deftest number-at-point-integers-atpt-4 ()
   (ar-test-with-elisp-buffer
       "#x75"
-    (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-5 ()
   (ar-test-with-elisp-buffer
       "#o165"
-    (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-6 ()
   (ar-test-with-elisp-buffer
       "117"
-    (forward-char -1)
     (ar-shift-atpt)
     (should (string= "118" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-8 ()
   (ar-test-with-elisp-buffer
       "#o7"
-    (forward-char -1)
     (ar-shift-atpt)
     (should (string= "#o10" (ar-number-atpt)))))
 
@@ -130,13 +126,13 @@ BODY is code to be executed within the temp buffer.  Point is
     (skip-chars-forward "^0-9")
     (should (string= "4" (ar-number-atpt)))))
 
-(ert-deftest number-at-point-integers-backward-1 ()
-  (ar-test-with-elisp-buffer
-      "foo-1.txt\nfoo-2.txt"
-    (ar-backward-number-atpt)
-    (should (string= "2" (ar-number-atpt)))
-    (ar-backward-number-atpt)
-    (should (string= "1" (ar-number-atpt)))))
+;; (ert-deftest number-at-point-integers-backward-1 ()
+;;   (ar-test-with-elisp-buffer
+;;       "foo-1.txt\nfoo-2.txt"
+;;     (ar-backward-number-atpt)
+;;     (should (string= "2" (ar-number-atpt)))
+;;     (ar-backward-number-atpt)
+;;     (should (string= "1" (ar-number-atpt)))))
 
 (provide 'numbers-at-point-tests)
 ;;; numbers-at-point-tests.el ends here
