@@ -159,10 +159,10 @@ Set comment to `t' if forms inside comments should match - also for processing c
     (when arg (message "%s" erg))
     erg))
 
-(defun beginning-of-form-base-intern (nesting begstr endstr permit-comment generic condition)
+(defun beginning-of-form-base-intern (nesting begstr endstr permit-comment permit-string condition)
   (let ((pps (parse-partial-sexp (point-min) (point))))
     ;; in string not permitted, leave it
-    (if (and (not generic) (nth 3 pps)(nth 8 pps))
+    (if (and (not permit-string) (nth 3 pps)(nth 8 pps))
         (goto-char (nth 8 pps))
       (unless (save-match-data (and condition (funcall condition)))
         (save-match-data
@@ -189,7 +189,7 @@ Set comment to `t' if forms inside comments should match - also for processing c
 		  (setq nesting (1+ nesting))))))))))
   nesting)
 
-(defun beginning-of-form-core (begstr endstr regexp searchform bound noerror nesting permit-comment generic condition)
+(defun beginning-of-form-core (begstr endstr regexp searchform bound noerror nesting permit-comment permit-string condition)
   (when
       (or
        ;; (looking-back searchform (line-beginning-position))
@@ -197,10 +197,10 @@ Set comment to `t' if forms inside comments should match - also for processing c
 	    (re-search-backward searchform bound noerror))
        (and (not regexp) (not (and begstr endstr))
 	    (search-backward searchform bound noerror)))
-    (setq nesting (beginning-of-form-base-intern nesting begstr endstr permit-comment generic condition))))
+    (setq nesting (beginning-of-form-base-intern nesting begstr endstr permit-comment permit-string condition))))
 
 ;; should `parse-sexp-ignore-comments' be usedq?
-(defun beginning-of-form-base (begstr &optional endstr bound noerror nesting permit-comment regexp condition generic)
+(defun beginning-of-form-base (begstr &optional endstr bound noerror nesting permit-comment regexp condition permit-string)
   "Assume being inside ary delimiters, go to start.
 
 Bound limits search.
@@ -209,7 +209,7 @@ NESTING, a number, enables match of nested forms.
 Set IN-COMMENT to `t' if forms inside comments should match - also for processing comments itself.
 Set 7th argument REGEXP t, if beg/end-str are regular expressions.
 CONDITION takes a function as argument perfoming the match.
-If GENERIC is non-nil, forms inside string or comment match.
+If IN-STRING is non-nil, forms inside string match.
 "
   (let* ((searchform (if (stringp begstr)
 			 (cond ((and (string= begstr endstr))
@@ -225,14 +225,14 @@ If GENERIC is non-nil, forms inside string or comment match.
          (permit-comment (or permit-comment ar-thing-inside-comment))
          beg-pos-delimiter end-pos-delimiter)
     (when
-	(setq nesting (beginning-of-form-core begstr endstr regexp searchform bound noerror nesting permit-comment generic condition))
+	(setq nesting (beginning-of-form-core begstr endstr regexp searchform bound noerror nesting permit-comment permit-string condition))
       (when (< nesting 1)
 	(setq beg-pos-delimiter (match-beginning 0))
 	(setq end-pos-delimiter (match-end 0))))
     (while
         (and
          (or (< 0 nesting)) (not (bobp)))
-      (setq nesting (beginning-of-form-core begstr endstr regexp searchform bound noerror nesting permit-comment generic condition)))
+      (setq nesting (beginning-of-form-core begstr endstr regexp searchform bound noerror nesting permit-comment permit-string condition)))
     (when (eq nesting 0)
 	(setq beg-pos-delimiter (match-beginning 0))
 	(setq end-pos-delimiter (match-end 0)))
@@ -256,28 +256,28 @@ If GENERIC is non-nil, forms inside string or comment match.
 	    (setq erg (1+ nesting)))))
       erg)))
 
-(defun end-of-form-base-intern (nesting begstr endstr permit-comment generic &optional condition regexp)
+(defun end-of-form-base-intern (nesting begstr endstr permit-comment permit-string &optional condition regexp)
   (let ((pps (parse-partial-sexp (point-min) (point))))
     ;; in string
-    (if (and (not generic) (nth 3 pps)(nth 8 pps))
+    (if (and (not permit-string) (nth 3 pps)(nth 8 pps))
         (progn
           (forward-char 1)
           (while (and (setq pps (parse-partial-sexp (point-min) (point)))(nth 3 pps)(nth 8 pps))
-	    (goto-char (nth 8 pps)) 
+	    (goto-char (nth 8 pps))
             (forward-sexp)))
       (unless (save-match-data
                 (and condition (funcall condition)))
 	(setq nesting (end-of-form-base-update-nesting nesting endstr permit-comment))))
     nesting))
 
-(defun end-of-form-core (begstr endstr regexp nesting permit-comment generic condition searchform bound noerror)
+(defun end-of-form-core (begstr endstr regexp nesting permit-comment permit-string condition searchform bound noerror)
   (when
       (or (and regexp (re-search-forward searchform bound noerror))
 	  (search-forward searchform bound noerror))
-    (setq nesting (end-of-form-base-intern nesting begstr endstr permit-comment generic condition))
+    (setq nesting (end-of-form-base-intern nesting begstr endstr permit-comment permit-string condition))
     nesting))
 
-(defun end-of-form-base (begstr endstr &optional bound noerror nesting permit-comment regexp condition generic)
+(defun end-of-form-base (begstr endstr &optional bound noerror nesting permit-comment regexp condition permit-string)
   "Goto closing of a programming structure in this level.
 As it stops one char after form, go one char back onto the last char of form.
 Set comment to `t' if forms inside comments should match - also for processing comments itself.
@@ -286,7 +286,9 @@ Set 7th argument REGEXP t, if beg/end-strings are regular expressions.
 Optional arg CONDITION expects a function whose return value - `t' or a number - is checked for success, otherwise search continues.
 If IN-STRING is non-nil, forms inside string match.
 "
-  (let* ((searchform (cond ((string= begstr endstr)
+  (let* ((begstr (regexp-quote begstr))
+	 (endstr (regexp-quote endstr))
+	 (searchform (cond ((string= begstr endstr)
                             endstr)
                            ((and begstr endstr)
                             (progn
@@ -296,22 +298,21 @@ If IN-STRING is non-nil, forms inside string match.
          (nesting (or nesting 0))
          (orig (point))
          (permit-comment (or permit-comment ar-thing-inside-comment))
-         beg-pos-delimiter end-pos-delimiter erg done)
+         beg-pos-delimiter end-pos-delimiter erg)
     (when (looking-at begstr)
       (goto-char (match-end 0)))
     (when (and (< 1 (length endstr))(looking-at searchform))
       (goto-char (match-end 0)))
     ;; (and (string= (prin1-to-string (char-after)) endstr)
     ;; (forward-char 1)))
-    (setq nesting (end-of-form-core begstr endstr regexp nesting permit-comment generic condition searchform bound noerror))
+    (setq nesting (end-of-form-core begstr endstr regexp nesting permit-comment permit-string condition searchform bound noerror))
     ;; (when (< nesting 0)
     ;;   (setq beg-pos-delimiter (match-beginning 0))
     ;;   (setq end-pos-delimiter (match-end 0)))
     (while
         (and
-         (< -1 nesting) (not (eobp)))
-      (setq done t)
-      (setq nesting (end-of-form-core begstr endstr regexp nesting permit-comment generic condition searchform bound noerror)))
+         (ignore-errors (< -1 nesting)) (not (eobp)))
+      (setq nesting (end-of-form-core begstr endstr regexp nesting permit-comment permit-string condition searchform bound noerror)))
     (if (ignore-errors (and (match-beginning 0) (match-end 0)))
 	(progn
 	  (goto-char (1- (match-end 0)))
@@ -543,15 +544,14 @@ NO-CHECK: don't consider nesting"
 
 (defun ar--delimiters-end-check-forms-intern (char orig escaped comment counter)
   (let ((this counter)
-	erg last done)
+	erg last)
     (cond ((and escaped comment)
 	   (while
 	       (ar--char-delimiters-forward char orig)
 	     (setq counter (1+ counter)))
 	   ;; try another one beyond limit set by orig
-	   (when (and (not done) (ar--char-delimiters-forward char))
-		 ;; don't raise counter, as it must remain uneven
-	     (setq done t))
+	   (ar--char-delimiters-forward char)
+	     ;; don't raise counter, as it must remain uneven
 	   (when (eq (char-after) char)
 	     (setq last (1+ (point)))))
 	  (escaped
@@ -598,11 +598,9 @@ NO-CHECK: don't consider nesting"
 	       (unless
 		   (or (ar-escaped) (ar-in-comment-p))
 		 (setq counter (1+ counter))))
-	     (while (and (not done) (ar--char-delimiters-forward char))
-	       (unless
-		   (or (ar-escaped) (ar-in-comment-p))
-		 ;; don't raise counter, as it must remain uneven
-		 (setq done t)))
+	     (while (and
+		     (ar--char-delimiters-forward char))
+	       (or (ar-escaped) (ar-in-comment-p)))
 	     (when (eq (char-after) char)
 	       (setq last (1+ (point))))))
     (when (eq 1 (% counter 2))

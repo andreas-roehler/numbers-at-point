@@ -135,7 +135,6 @@ If arg SYMBOL is a string, raise according to value"
 	(setq erg (ar--shift-symbol-up symbol))
       (setq erg (ar--shift-symbol-down symbol)))))
 
-
 (defun ar-raise-number-intern (step strg)
   "Return raised value."
   (let* ()
@@ -176,8 +175,14 @@ Shift \"y\" to \"a\".
 Call `ar-shift-atpt' otherwise
 Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
-  (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end))
-
+  (if (use-region-p)
+      (ar-with-integers-in-region-maybe 'ar-shift-atpt step (region-beginning) (region-end))
+    (ar-shift-atpt)))
+;; (setq mark-active t)
+;; (exchange-point-and-mark)
+;; (push-mark (point) t)
+;; (goto-char (point-max))
+;; (setq transient-mark-mode t))
 
 (defun ar-decrease-in-region-maybe (&optional step)
   "Decrease integers at point according to STEP.
@@ -187,9 +192,9 @@ Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
 Default is 1"
   (interactive "*p")
   (ar-raise-in-region-maybe (- step)
-				   ;; (called-interactively-p)
-				     ;; (interactive-p)
-))
+			    ;; (called-interactively-p)
+			    ;; (interactive-p)
+			    ))
 
 (defun ar-raise-kummulative-maybe (&optional step beg end)
   "With use-region-p raise/decrease integers in region.
@@ -205,7 +210,9 @@ Numbers are raised adding one STEP to STEP each, if STEP is positive, decreased 
 Call `ar-shift-atpt' otherwise
 Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
-  (let ((step (or step 1))
+  ;; (window-configuration-to-register 313465892)
+  (let ((old-mark (mark))
+	(step (or step 1))
 	(count step)
 	(beg (cond (beg)
 		   ((use-region-p)
@@ -213,27 +220,34 @@ Numbers are raised if STEP is positive, decreased otherwise"
 	(end (cond (end)
 		   ((use-region-p)
 		    (copy-marker (region-end))))))
-    (if
-	(and beg end)
-	(save-restriction
-	  (narrow-to-region beg end)
-	  (goto-char (point-min))
-	  (unless (ar-number-atpt)(ar-forward-number-atpt))
-	  (while (and
-		  (prog1
-		      ;; (ar-shift-atpt step)
-		      (funcall command count)
-		    (forward-char 1))
-		  (ar-forward-number-atpt)
-		  (progn
-		    (when cummulative (setq count (+ count step)))
-		    (not (eobp)))))
-	  (goto-char beg)
-	  (push-mark)
-	  (goto-char end)
-	  (exchange-point-and-mark))
-      ;; (ar-shift-atpt step)
-      (funcall command step))))
+    (save-excursion
+      (if
+	  (and beg end)
+	  (save-restriction
+	    (narrow-to-region beg end)
+	    (goto-char (point-min))
+	    (unless (ar-number-atpt)(ar-forward-number-atpt))
+	    (while (and
+		    (prog1
+			;; (ar-shift-atpt step)
+			(funcall command count)
+		      (forward-char 1))
+		    (ar-forward-number-atpt)
+		    (progn
+		      (when cummulative (setq count (+ count step)))
+		      (not (eobp)))))
+	    ;; (goto-char beg)
+	    ;; (push-mark (point) t)
+	    ;; (goto-char end)
+	    ;; (setq transient-mark-mode t)
+	    ;; (exchange-point-and-mark)
+	    )
+	;; (ar-shift-atpt step)
+	(funcall command step)))
+    ;; (jump-to-register 313465892)
+    ;; (set-mark old-mark)
+    ;; (exchange-point-and-mark)
+	    ))
 
 (provide 'numbers-at-point)
 ;;; numbers-at-point.el ends here

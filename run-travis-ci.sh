@@ -24,7 +24,8 @@ FILE4=thingatpt-utils-core.el
 FILE5=thing-at-point-utils.el
 FILE6=numbers-at-point.el
 
-TEST1=test/numbers-at-point-tests.el
+TEST1=test/numbers-at-point-setup-tests.el
+TEST2=test/numbers-at-point-tests.el
 
 if [ -s emacs24 ]; then
     EMACS=emacs24
@@ -44,6 +45,7 @@ hier () {
 -load $FILE6 \
 \
 -load $TEST1 \
+-load $TEST2 \
 -f ert-run-tests-batch-and-exit
 }
 
@@ -58,6 +60,7 @@ entfernt () {
 -load $FILE6 \
 \
 -load $TEST1 \
+-load $TEST2 \
 -f ert-run-tests-batch-and-exit
 }
 

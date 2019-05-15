@@ -54,6 +54,18 @@ BODY is code to be executed within the temp buffer.  Point is
        (font-lock-fontify-region (point-min) (point-max))
        ,@body)))
 
+(defmacro ar-test-with-insert-function-elisp (function &rest body)
+  "Create temp buffer in `emacs-lisp-mode' inserting CONTENTS.
+BODY is code to be executed within the temp buffer.  Point is
+ at the end of buffer."
+  `(with-temp-buffer
+     (let (hs-minor-mode thing-copy-region)
+       (emacs-lisp-mode)
+       ,function
+       (when ar-switch-p
+	 (switch-to-buffer (current-buffer)))
+       ,@body)))
+
 (defmacro ar-test-with-elisp-buffer-point-min (contents &rest body)
   "Create temp buffer inserting CONTENTS.
 BODY is code to be executed within the temp buffer.  Point is
@@ -71,36 +83,48 @@ BODY is code to be executed within the temp buffer.  Point is
 (ert-deftest number-at-point-integers-atpt-4 ()
   (ar-test-with-elisp-buffer
       "#x75"
+    (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-5 ()
   (ar-test-with-elisp-buffer
       "#o165"
+    (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-6 ()
   (ar-test-with-elisp-buffer
       "117"
+    (forward-char -1)
     (ar-shift-atpt)
     (should (string= "118" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-8 ()
   (ar-test-with-elisp-buffer
       "#o7"
+    (forward-char -1)
     (ar-shift-atpt)
     (should (string= "#o10" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-9 ()
   (ar-test-with-elisp-buffer
       "117 2"
-    (ar-raise-in-region-maybe 1 (point-min) (point-max))
-    (should (string= "118" (ar-number-atpt)))
-    (goto-char (1- (point-max)))
-    (should (string= "3" (ar-number-atpt)))))
+    (let ((transient-mark-mode t)
+	  (mark-active t))
+      (push-mark)
+      (goto-char (point-min))
+      (ar-raise-in-region-maybe 1 (point-min) (point-max))
+      (should (string= "118" (ar-number-atpt)))
+      (goto-char (1- (point-max)))
+      (should (string= "3" (ar-number-atpt))))))
 
 (ert-deftest number-at-point-integers-atpt-13 ()
   (ar-test-with-elisp-buffer
       "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
+    (push-mark)
+    (goto-char (point-min))
+    (transient-mark-mode 1)
+    (exchange-point-and-mark)
     (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (goto-char (point-min))
     (skip-chars-forward "^0-9")
@@ -115,6 +139,10 @@ BODY is code to be executed within the temp buffer.  Point is
 (ert-deftest number-at-point-integers-atpt-14 ()
   (ar-test-with-elisp-buffer
       "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
+    (push-mark)
+    (goto-char (point-min))
+    (transient-mark-mode 1)
+    (exchange-point-and-mark)
     (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (goto-char (point-min))
     (skip-chars-forward "^0-9")
