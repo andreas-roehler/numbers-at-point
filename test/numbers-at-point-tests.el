@@ -27,59 +27,6 @@
 
 (require 'numbers-at-point)
 
-(defvar ar-switch-p nil
-  "Switch into test-buffer.")
-
-(defcustom ar-switch-p nil
-  ""
-  :type 'boolean
-  :group 'werkstatt)
-
-(defun ar-toggle-switch-p ()
-  "Toggle `ar-switch-p'. "
-  (interactive)
-  (setq ar-switch-p (not ar-switch-p))
-  (message "ar-switch-p: %s"  ar-switch-p))
-
-(defmacro ar-test-with-elisp-buffer (contents &rest body)
-  "Create temp buffer in `emacs-lisp-mode' inserting CONTENTS.
-BODY is code to be executed within the temp buffer.  Point is
- at the end of buffer."
-  `(with-temp-buffer
-     (let (hs-minor-mode thing-copy-region)
-       (emacs-lisp-mode)
-       (insert ,contents)
-       (when ar-switch-p
-	 (switch-to-buffer (current-buffer)))
-       (font-lock-fontify-region (point-min) (point-max))
-       ,@body)))
-
-(defmacro ar-test-with-insert-function-elisp (function &rest body)
-  "Create temp buffer in `emacs-lisp-mode' inserting CONTENTS.
-BODY is code to be executed within the temp buffer.  Point is
- at the end of buffer."
-  `(with-temp-buffer
-     (let (hs-minor-mode thing-copy-region)
-       (emacs-lisp-mode)
-       ,function
-       (when ar-switch-p
-	 (switch-to-buffer (current-buffer)))
-       ,@body)))
-
-(defmacro ar-test-with-elisp-buffer-point-min (contents &rest body)
-  "Create temp buffer inserting CONTENTS.
-BODY is code to be executed within the temp buffer.  Point is
- at the end of buffer."
-  `(with-temp-buffer
-     (let (hs-minor-mode thing-copy-region)
-       (insert ,contents)
-       (emacs-lisp-mode)
-       (goto-char (point-min))
-       (when ar-switch-p
-	 (switch-to-buffer (current-buffer)))
-       (font-lock-fontify-region (point-min) (point-max))
-       ,@body)))
-
 (ert-deftest number-at-point-integers-atpt-4 ()
   (ar-test-with-elisp-buffer
       "#x75"
@@ -153,6 +100,14 @@ BODY is code to be executed within the temp buffer.  Point is
     (forward-char 1)
     (skip-chars-forward "^0-9")
     (should (string= "4" (ar-number-atpt)))))
+
+
+(ert-deftest number-at-point-decrease-atpt-lxwt04 ()
+  (ar-test-with-elisp-buffer
+      "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
+    (search-backward "3")
+    (ar-decrease-in-region-maybe)
+    (should (eq (char-after) 50))))
 
 ;; (ert-deftest number-at-point-integers-backward-1 ()
 ;;   (ar-test-with-elisp-buffer

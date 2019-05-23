@@ -177,7 +177,7 @@ Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
   (if (use-region-p)
       (ar-with-integers-in-region-maybe 'ar-shift-atpt step (region-beginning) (region-end))
-    (ar-shift-atpt)))
+    (ar-shift-atpt step)))
 ;; (setq mark-active t)
 ;; (exchange-point-and-mark)
 ;; (push-mark (point) t)
@@ -191,10 +191,11 @@ Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
 
 Default is 1"
   (interactive "*p")
-  (ar-raise-in-region-maybe (- step)
-			    ;; (called-interactively-p)
-			    ;; (interactive-p)
-			    ))
+  (let ((step (or step 1)))
+    (ar-raise-in-region-maybe (- step)
+			      ;; (called-interactively-p)
+			      ;; (interactive-p)
+			      )))
 
 (defun ar-raise-kummulative-maybe (&optional step beg end)
   "With use-region-p raise/decrease integers in region.
