@@ -256,11 +256,16 @@ Otherwise return nil."
   (interactive)
   (let* ((pps (parse-partial-sexp (point-min) (point)))
 	 (erg (and (nth 3 pps) (nth 8 pps)))
-	 (la (unless (or erg (eobp)) (when (eq (char-syntax (char-after)) 34)
-			   (point)))))
-    (setq erg (or erg la))
-    (when (interactive-p) (message "%s" erg))
-    erg))
+	 (orig (point))
+	 (la (unless (or erg (eobp))
+	       (and (eq (char-syntax (char-after)) 34)
+		    ;; look for closing char
+		    (save-excursion
+		      (forward-char 1)
+		      (nth 3 (parse-partial-sexp (point-min) (point))))
+		    (point)))))
+    (when (interactive-p) (message "%s" (or erg la)))
+    (or erg la)))
 
 (defun ar-in-string-p-fast ()
   "Return delimiting character if inside, nil otherwise."
@@ -644,7 +649,7 @@ Optional argument END end."
 	  (unless (member (current-column) ilist)
 	    (cons (current-column) ilist)))))))
 
-(defun reverse-char (&optional char)
+(defun ar-reverse-char (&optional char)
   "Reverse reciproke chars as \"[\" to \"]\".
 
 Change doublequotes into singlequotes et vice versa
@@ -670,6 +675,8 @@ otherwise return complement char"
 (defun ar--return-complement-char-maybe (char)
   "Reverse reciproke CHARs as \"[\" to \"]\"."
   (pcase char
+    (?+ ?-)
+    (?- ?+)
     (92 47)
     (47 92)
     (?' ?\")
@@ -983,7 +990,7 @@ Returns position if successful, nil otherwise"
     (unless (eobp)
       (when (ar--forward-toplevel-intern orig (parse-partial-sexp (point-min) (point)))
 	(if (eobp)
-	    (newline)
+	    (newline 1)
 	  (forward-line 1)
 	  (beginning-of-line)))
       (when (< orig (point))

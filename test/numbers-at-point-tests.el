@@ -27,6 +27,7 @@
 
 (require 'numbers-at-point)
 
+
 (ert-deftest number-at-point-integers-atpt-4 ()
   (ar-test-with-elisp-buffer
       "#x75"
@@ -116,6 +117,9 @@
 ;;     (should (string= "2" (ar-number-atpt)))
 ;;     (ar-backward-number-atpt)
 ;;     (should (string= "1" (ar-number-atpt)))))
+
+
+
 
 (provide 'numbers-at-point-tests)
 ;;; numbers-at-point-tests.el ends here

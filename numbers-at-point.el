@@ -169,6 +169,8 @@ Shift \"y\" to \"a\".
 	  (t (setq newval (char-to-string (ar--shift-symbol (string-to-char strg) step)))
 	     (ar-replace-atpt newval beg end "s")))))
 
+(defalias 'ar-raise-in-region-maybe 'ar-raise-numbers-in-region)
+
 (defun ar-raise-in-region-maybe (&optional step beg end)
   "With use-region-p raise/decrease integers in region.
 
@@ -184,6 +186,7 @@ Numbers are raised if STEP is positive, decreased otherwise"
 ;; (goto-char (point-max))
 ;; (setq transient-mark-mode t))
 
+(defalias 'ar-decrease-in-region-maybe 'ar-decrease-numbers-in-region-maybe)
 (defun ar-decrease-in-region-maybe (&optional step)
   "Decrease integers at point according to STEP.
 

@@ -58,5 +58,17 @@
     (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (should (string= "foo#xabar" (ar-number-atpt)))))
 
+(ert-deftest ar-ert-raise-numbers-1 ()
+  (ar-test-with-elisp-buffer-point-min
+      "#x75"
+    ;; (should (eq 118 (1+ (car (read-from-string (number-at-point))))
+    (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
+
+(ert-deftest ar-ert-raise-numbers-2 ()
+  (ar-test-with-elisp-buffer-point-min
+      "#o165"
+    ;; (should (eq 118 (1+ (car (read-from-string (number-at-point))))
+    (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
+
 (provide 'numbers-at-point-interactive-tests)
 ;;; numbers-at-point-interactive-tests.el ends here
