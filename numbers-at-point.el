@@ -161,13 +161,15 @@ Shift \"y\" to \"a\".
          (end (cdr bounds))
 	 (strg (buffer-substring-no-properties beg end))
 	 (step (or step 1))
-	 kind newval)
+	 kind newval erg)
     (cond (numberbounds
 	   (setq kind (ar-raise-kind-of-integer strg))
 	   (setq newval (ar-raise-number-intern step strg))
 	   (ar-replace-atpt newval beg end kind))
-	  (t (setq newval (char-to-string (ar--shift-symbol (string-to-char strg) step)))
-	     (ar-replace-atpt newval beg end "s")))))
+	  (t (setq erg (ar--shift-symbol (string-to-char strg) step))
+	     (when erg
+	       (setq newval (char-to-string erg))
+	       (ar-replace-atpt newval beg end "s"))))))
 
 (defalias 'ar-raise-in-region-maybe 'ar-raise-numbers-in-region)
 
