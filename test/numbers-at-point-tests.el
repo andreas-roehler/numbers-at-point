@@ -28,29 +28,37 @@
 (require 'numbers-at-point)
 
 
+(ert-deftest ar-ert-raise-numbers-1 ()
+  (ar-test-with-elisp-buffer-point-min
+      "#x75"
+    ;; (should (eq 118 (1+ (car (read-from-string (number-at-point))))
+    (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
+
+(ert-deftest ar-ert-raise-numbers-2 ()
+  (ar-test-with-elisp-buffer-point-min
+      "#o165"
+    ;; (should (eq 118 (1+ (car (read-from-string (number-at-point))))
+    (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
+
 (ert-deftest number-at-point-integers-atpt-4 ()
   (ar-test-with-elisp-buffer
       "#x75"
-    (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-5 ()
   (ar-test-with-elisp-buffer
       "#o165"
-    (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-6 ()
   (ar-test-with-elisp-buffer
       "117"
-    (forward-char -1)
     (ar-shift-atpt)
     (should (string= "118" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-8 ()
   (ar-test-with-elisp-buffer
       "#o7"
-    (forward-char -1)
     (ar-shift-atpt)
     (should (string= "#o10" (ar-number-atpt)))))
 
@@ -106,8 +114,9 @@
 (ert-deftest number-at-point-decrease-atpt-lxwt04 ()
   (ar-test-with-elisp-buffer
       "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
+    (goto-char (point-max)) 
     (search-backward "3")
-    (ar-decrease-in-region-maybe)
+    (ar-decrease-in-region-maybe 1 (point-min) (point-max))
     (should (eq (char-after) 50))))
 
 ;; (ert-deftest number-at-point-integers-backward-1 ()
@@ -118,6 +127,16 @@
 ;;     (ar-backward-number-atpt)
 ;;     (should (string= "1" (ar-number-atpt)))))
 
+
+(ert-deftest ar-ert-raise-numbers-N1iGwo ()
+  (ar-test-with-elisp-buffer
+      "	    j) echo \"Lade \\$TEST11: \\\"$TEST11\\\"\"\;h11;;"
+    (goto-char (point-max))
+    (push-mark)
+    (goto-char (point-min))
+    (transient-mark-mode 1)
+    (ar-raise-in-region-maybe 1 (point) (mark))
+    (should (search-forward "12"))))
 
 
 

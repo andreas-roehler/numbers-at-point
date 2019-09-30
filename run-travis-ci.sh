@@ -89,20 +89,4 @@ else
     echo "Lade entfernt"
     entfernt
 fi
-# if [ $ORT -eq 0 ]; then
-#     hier
-#     echo "Lade Umgebung \"hier\""
-# else
-#     echo "entfernt"
-#     echo "Lade Umgebung \"entfernt\""
-# fi
 
-# -load $FILE3 \
-
-# -load $FILE1 \
-# -load $FILE2 \
-# -load $FILE3 \
-# \
-# -load $TEST1 \
-# -load $TEST2 \
-# -load $TEST3 \

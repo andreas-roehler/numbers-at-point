@@ -1005,7 +1005,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Backslashed
 (put 'backslashed 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?\\ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?\\)
+                (ar-char-delimiters-beginning ?\\ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1028,7 +1031,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Backticked
 (put 'backticked 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?` ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?`)
+                (ar-char-delimiters-beginning ?` ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1051,7 +1057,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Coloned
 (put 'coloned 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?: ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?:)
+                (ar-char-delimiters-beginning ?: ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1074,7 +1083,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Dollared
 (put 'dollared 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?$ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?$)
+                (ar-char-delimiters-beginning ?$ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1097,7 +1109,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Doublequoted
 (put 'doublequoted 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?\" ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?\")
+                (ar-char-delimiters-beginning ?\" ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1120,7 +1135,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Equalized
 (put 'equalized 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?= ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?=)
+                (ar-char-delimiters-beginning ?= ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1143,7 +1161,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Hyphened
 (put 'hyphened 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?- ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?-)
+                (ar-char-delimiters-beginning ?- ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1166,7 +1187,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Singlequoted
 (put 'singlequoted 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?' ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?')
+                (ar-char-delimiters-beginning ?' ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1189,7 +1213,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Slashed
 (put 'slashed 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?/ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?/)
+                (ar-char-delimiters-beginning ?/ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1212,7 +1239,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Stared
 (put 'stared 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?* ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?*)
+                (ar-char-delimiters-beginning ?* ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1235,7 +1265,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Underscored
 (put 'underscored 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?_ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ?_)
+                (ar-char-delimiters-beginning ?_ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -1258,7 +1291,10 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Whitespaced
 (put 'whitespaced 'beginning-op-at
      (lambda ()
-       (let ((beg (ar-char-delimiters-beginning ?  ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (let ((beg
+	      (if ar-scan-whole-buffer
+		  (ar-beginning-of-unary-delimited-atpt ? )
+                (ar-char-delimiters-beginning ?  ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
 	 (when beg
 	   (cons beg (1+ beg))))))
 
@@ -2875,25 +2911,27 @@ NO-CHECK assumes being at or behind a closing delimiter, doesn't check for nesti
 "
   (setq ar-th-bounds-backfix nil)
   (ignore-errors
-    (if (eq thing 'region)
-	(ignore-errors (cons (region-beginning) (region-end)))
-      (save-excursion
-	(save-restriction
-	  (let ((regstart (when (use-region-p) (region-beginning)))
-		(regend (when (use-region-p) (region-end))))
-	    ;; (when (use-region-p)
-	    ;;   (narrow-to-region regstart regend))
-	    (let* ((orig (point))
-		   ;; (scan-whole-buffer check)
-		   (beg (funcall (get thing 'beginning-op-at)))
-		   (end (and beg (funcall (get thing 'end-op-at)))))
-	      (when ar-th-bounds-backfix 
-		(message "backfix: %s" ar-th-bounds-backfix)
-		(setq beg ar-th-bounds-backfix)
-		)
-	      (if (numberp beg)
-		  (ar--th-bounds-char-return beg end check orig no-delimiters)
-		(ar--th-bounds-list-return beg end iact check orig no-delimiters)))))))))
+    (cond ((eq thing 'region)
+	   (ignore-errors (cons (region-beginning) (region-end))))
+	  ((eq thing 'char)
+	   (cons (point) (1+ (point))))
+	  (t (save-excursion
+	       (save-restriction
+		 (let ((regstart (when (use-region-p) (region-beginning)))
+		       (regend (when (use-region-p) (region-end))))
+		   ;; (when (use-region-p)
+		   ;;   (narrow-to-region regstart regend))
+		   (let* ((orig (point))
+			  ;; (scan-whole-buffer check)
+			  (beg (funcall (get thing 'beginning-op-at)))
+			  (end (and beg (funcall (get thing 'end-op-at)))))
+		     (when ar-th-bounds-backfix
+		       (message "backfix: %s" ar-th-bounds-backfix)
+		       (setq beg ar-th-bounds-backfix))
+		     (if (numberp beg)
+			 (ar--th-bounds-char-return beg end check orig no-delimiters)
+		       (ar--th-bounds-list-return beg end iact check orig no-delimiters))))))))))
+
 
 (defun ar-th-beg (thing &optional arg iact check)
   "Return beginning position of THING. "
@@ -3136,52 +3174,63 @@ Inspired by stuff like `paredit-splice-sexp-killing-backward'; however, instead 
 
 (defun ar-th-separate (thing &optional arg iact check)
   "Optional CHECK is ignored "
-  (save-excursion
-    (let* ((bounds (ar-th-bounds thing arg iact check))
-	   (beg (caar bounds))
-	   (end (copy-marker (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))))))
-      (when beg (goto-char beg)
-	    (when (not (looking-back "^[ \t\f\r]*" (line-beginning-position)))
-	      (newline ar-newlines-separate-before))
-	    (indent-according-to-mode)
-	    (goto-char end)
-	    (when (not (looking-at "[ \t\f\r]*$"))
-	      (newline 1)
-	      (indent-according-to-mode))))))
+  (let* ((bounds (ar-th-bounds thing arg iact check))
+	 (beg (caar bounds))
+	 (end (copy-marker (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))))))
+    (when beg (goto-char beg)
+	  (when (not (looking-back "^[ \t\f\r]*" (line-beginning-position)))
+	    (newline ar-newlines-separate-before))
+	  (indent-according-to-mode)
+	  (goto-char end)
+	  (when (not (looking-at "[ \t\f\r]*$"))
+	    (newline 1)
+	    (indent-according-to-mode)))))
+
+(defun ar-in-delimited-p (char)
+  "Return if CHAR is delimiting at point.
+
+Return position if at opening delimiter"
+  (let ((orig (point))
+        (char (char-to-string char))
+	(counter 0)
+	erg)
+    (save-excursion
+      (goto-char (point-min))
+      (while (and (search-forward char orig t)
+		  (not (ar-escaped)))
+	(setq counter (1+ counter))))
+    (setq erg (eq 1 (% counter 2)))
+    (or erg (and (eq (char-after) char)(point)))))
 
 (defun ar-thing-in-thing (thing-1th thing-2th th-function &optional iact beg-2th end-2th)
   "Addresses things of 1th kind within the borders of the 2th,
 If optional positions BEG-2TH END-2TH are given, works on them instead. "
   (let* ((bounds (ar-th-bounds thing-2th))
-	 (beg (or (ignore-errors (caar bounds))(car-safe bounds)))
-	 (end (copy-marker (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))(cdr-safe bounds))))
+	 ;; take the inner pos of a delimiter
+	 (beg (or
+	       (ignore-errors (car (cdr (car-safe bounds))))
+	       (ignore-errors (caar bounds))
+	       (ignore-errors (car bounds))))
+	 ;; take the inner pos of a delimiter
+	 (end (copy-marker (or (ignore-errors (car (car (cdr bounds))))(ignore-errors (car (cdr (cadr bounds))))(ignore-errors (cdr (cadr bounds)))(cdr-safe bounds))))
 	 (orig (copy-marker beg))
-         ar-scan-whole-buffer
-	 (last 1))
+         ;; ar-scan-whole-buffer
+	 (last 1)
+	 inner-end)
     (save-excursion
       (save-restriction
         (narrow-to-region beg end)
         (goto-char beg)
         (if (eq th-function 'ar-th-sort)
             (ar-th-sort thing-1th nil beg end nil nil nil)
-          (while (and (prog1 (not (eobp))
-			;; (narrow-to-region last (point-max))
-			(narrow-to-region (max last (point)) (point-max)))
-		      (or (eq thing-1th 'char)
-			  (and (not (eq last (point))) (ar-th-end thing-1th) (and (funcall th-function thing-1th nil iact ar-scan-whole-buffer) (setq last (point))))
-			  (ar-th-gotoend thing-1th 1 iact t)
-			  (ar-th-forward thing-1th 1 iact t))
-		      (<= orig (point)))
-	    (setq orig (point-marker))
-	    (unless (or (not (ar-th-end thing-1th)) (and (eq last (point)) (eq thing-1th 'char)))
-	      (setq last (copy-marker (ar-th-end thing-1th)))
-	      (funcall th-function thing-1th nil iact ar-scan-whole-buffer))
-	    ;; forward might stop at the opener
-	    ;; ‘ar-scan-whole-buffer’ is let-bound to nil here
-	    (unless (eobp)
-	      (when (member thing-1th ar-unpaired-delimited-passiv)
-		(forward-char 1)))
-	    (when (< (point) orig)(goto-char orig))))))))
+	  (while
+	      (and
+	       (prog1 (or (< last (point))(setq inner-end (ar-th-forward thing-1th 1 iact t)))
+		 (when (numberp inner-end) (goto-char inner-end))
+		 (funcall th-function thing-1th nil iact ar-scan-whole-buffer))
+	       (setq last (point))
+	       (not (eobp))
+	       (setq inner-end (ar-th-forward thing-1th 1 iact t)))))))))
 
 (defun ar-th-kill (thing &optional no-delimiters iact check)
   " "

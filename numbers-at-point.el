@@ -179,9 +179,11 @@ Shift \"y\" to \"a\".
 Call `ar-shift-atpt' otherwise
 Numbers are raised if STEP is positive, decreased otherwise"
   (interactive "p")
-  (if (use-region-p)
-      (ar-with-integers-in-region-maybe 'ar-shift-atpt step (region-beginning) (region-end))
-    (ar-shift-atpt step)))
+  (cond ((use-region-p)
+	 (ar-with-integers-in-region-maybe 'ar-shift-atpt step (region-beginning) (region-end)))
+	((and beg end)
+	 (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end))
+	(t (ar-shift-atpt step))))
 ;; (setq mark-active t)
 ;; (exchange-point-and-mark)
 ;; (push-mark (point) t)
@@ -189,18 +191,17 @@ Numbers are raised if STEP is positive, decreased otherwise"
 ;; (setq transient-mark-mode t))
 
 (defalias 'ar-decrease-in-region-maybe 'ar-decrease-numbers-in-region-maybe)
-(defun ar-decrease-in-region-maybe (&optional step)
+(defun ar-decrease-in-region-maybe (&optional step beg end)
   "Decrease integers at point according to STEP.
 
 Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
 
 Default is 1"
   (interactive "*p")
-  (let ((step (or step 1)))
-    (ar-raise-in-region-maybe (- step)
-			      ;; (called-interactively-p)
-			      ;; (interactive-p)
-			      )))
+  (let ((step (or step 1))
+	(beg (or beg (and (use-region-p) (region-beginning))))
+	(end (or end (and (use-region-p) (region-end)))))
+    (ar-raise-in-region-maybe (- step) beg end)))
 
 (defun ar-raise-kummulative-maybe (&optional step beg end)
   "With use-region-p raise/decrease integers in region.
