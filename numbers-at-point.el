@@ -145,7 +145,7 @@ If arg SYMBOL is a string, raise according to value"
 
 (defalias 'ar-add-to-number 'ar-shift-atpt)
 (defun ar-shift-atpt (&optional step iact)
-  "Shift integer or char at point according to STEP.
+  "Shift integer at point according to STEP.
 
 Default is 1
 
@@ -162,6 +162,8 @@ Shift \"y\" to \"a\".
 	 (strg (buffer-substring-no-properties beg end))
 	 (step (or step 1))
 	 kind newval erg)
+    (if (string-match "[[:alpha:]]" strg)
+	(error "Not a number")
     (cond (numberbounds
 	   (setq kind (ar-raise-kind-of-integer strg))
 	   (setq newval (ar-raise-number-intern step strg))
@@ -169,7 +171,7 @@ Shift \"y\" to \"a\".
 	  (t (setq erg (ar--shift-symbol (string-to-char strg) step))
 	     (when erg
 	       (setq newval (char-to-string erg))
-	       (ar-replace-atpt newval beg end "s"))))))
+	       (ar-replace-atpt newval beg end "s")))))))
 
 (defalias 'ar-raise-in-region-maybe 'ar-raise-numbers-in-region)
 

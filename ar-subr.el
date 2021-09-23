@@ -576,8 +576,7 @@ When `end-of-defun-function' is set, call it with optional ARG"
     (let* ((pps (parse-partial-sexp (point-min)(point)))
 	   (nesting (nth 0 pps))
 	   (in-comment (or (nth 4 pps)(looking-at comment-start)))
-	   (orig (point))
-	   erg)
+	   (orig (point)))
       (cond
        ((nth 1 pps)
 	;; (goto-char (nth 1 pps))
@@ -588,16 +587,14 @@ When `end-of-defun-function' is set, call it with optional ARG"
 	(ar-forward-comment)
 	(ar-forward-defun))
        ((looking-at ar-beginning-of-defun-re)
-	(setq erg (forward-sexp))
-	(setq erg (point)))
+	(forward-sexp))
        ((< 0 nesting)
 	(ar-beginning-of-defun)
-	(setq erg (ar-end-of-defun)))
+	(ar-end-of-defun))
        ((eq (char-after) ?\()
-	(forward-sexp)
-	(setq erg (point))))
-      (when (< orig (point))
-	erg))))
+	(forward-sexp)))
+       (when (< orig (point))
+	(point)))))
 
 (defalias 'defun-beginning-position 'function-beginning-position)
 (defun function-beginning-position ()
@@ -679,8 +676,8 @@ otherwise return complement char"
     (?- ?+)
     (92 47)
     (47 92)
-    (?' ?\")
-    (?\" ?')
+    ;; (?' ?\")
+    ;; (?\" ?')
     (?‘ ?’)
     (?` ?´)
     (?´ ?`)
@@ -880,7 +877,7 @@ Argument ORIG start."
     (current-indentation)))
 
 (defun ar-backward-toplevel (&optional arg)
-  "Go to end of a toplevel form.
+  "Go to beginning of a toplevel form.
 
 Returns position if successful, nil otherwise
 Optional argument ARG times"
@@ -900,7 +897,7 @@ Optional argument ARG times"
 	      (prog1 (re-search-backward "^[^ \t\n\f\r]" nil 'move arg)
 		(beginning-of-line))
 	      (or (ignore-errors (looking-at comment-start))(ignore-errors (looking-at comment-start-skip))
-		  (and (setq this (ignore-errors (nth 8 (parse-partial-sexp limit (point)))))
+		  (and (setq this (save-excursion (ignore-errors (nth 8 (parse-partial-sexp limit (point))))))
 		       (setq limit this))
 		  (member (char-after) toplevel-nostart-chars)))
 	(forward-line -1)
