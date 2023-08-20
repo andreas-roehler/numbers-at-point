@@ -162,16 +162,18 @@ Shift \"y\" to \"a\".
 	 (strg (buffer-substring-no-properties beg end))
 	 (step (or step 1))
 	 kind newval erg)
-    (if (string-match "[[:alpha:]]" strg)
-	(error "Not a number")
-    (cond (numberbounds
-	   (setq kind (ar-raise-kind-of-integer strg))
-	   (setq newval (ar-raise-number-intern step strg))
-	   (ar-replace-atpt newval beg end kind))
-	  (t (setq erg (ar--shift-symbol (string-to-char strg) step))
-	     (when erg
-	       (setq newval (char-to-string erg))
-	       (ar-replace-atpt newval beg end "s")))))))
+    (if (or
+         (string-match "^#[ox][[:digit:]]+$" strg)
+         (string-match "^[[:digit:]]+$" strg))
+        (cond (numberbounds
+	       (setq kind (ar-raise-kind-of-integer strg))
+	       (setq newval (ar-raise-number-intern step strg))
+	       (ar-replace-atpt newval beg end kind))
+	      (t (setq erg (ar--shift-symbol (string-to-char strg) step))
+	         (when erg
+	           (setq newval (char-to-string erg))
+	           (ar-replace-atpt newval beg end "s"))))
+      (error "Not a number"))))
 
 (defalias 'ar-raise-in-region-maybe 'ar-raise-numbers-in-region)
 
@@ -259,4 +261,4 @@ Numbers are raised if STEP is positive, decreased otherwise"
 	    ))
 
 (provide 'numbers-at-point)
-;;; numbers-at-point.el ends here
+;;; numbers-at-point.el ends her
