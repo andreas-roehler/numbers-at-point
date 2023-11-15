@@ -5269,32 +5269,32 @@
   "Returns alnum at point as string if any, nil otherwise. 
 
 With \\[universal-argument] strip delimiters if suitable"
-  (interactive "P")
+  (interactive "p")
   (ar-th 'alnum arg))
 
 (defun ar-bounds-of-alnum-atpt (&optional arg)
   "Returns a list, borders of alnum if any, nil otherwise. "
-  (interactive "P")
+  (interactive "p")
   (ar-th-bounds 'alnum arg))
 
 (defun ar-alnum-beginning-position-atpt (&optional arg)
   "Returns a number, beginning position ALNUM at point if any, nil otherwise.  "
-  (interactive "P")
+  (interactive "p")
   (ar-th-beg 'alnum arg))
 
 (defun ar-alnum-end-position-atpt (&optional arg)
   "Returns a number, end position of ALNUM at point if any, nil otherwise. "
-  (interactive "P")
+  (interactive "p")
   (ar-th-end 'alnum arg))
 
 (defun ar-alnum-beginning-atpt (&optional arg)
   "Goto beginning of symbol or char-class ALNUM at point if any, nil otherwise. "
-  (interactive "P")
+  (interactive "p")
   (ar-th-gotobeg 'alnum arg))
 
 (defun ar-alnum-end-atpt (&optional arg)
   "Goto end of symbol or char-class ALNUM at point if any, nil otherwise. "
-  (interactive "P")
+  (interactive "p")
   (ar-th-gotoend 'alnum arg))
 
 (defun ar-in-alnum-p-atpt (&optional arg)
@@ -7245,7 +7245,7 @@ With optional \\[universal-argument] NO-DELIMITERS resp. to inner position of de
   "Returns delimited at point as string if any, nil otherwise. 
 
 With \\[universal-argument] strip delimiters if suitable"
-  (interactive "P")
+  (interactive "p")
   (ar-th 'delimited arg))
 
 (defun ar-bounds-of-delimited-atpt (&optional arg)

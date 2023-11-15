@@ -47,16 +47,21 @@ echo "\$*: $*"
 PDIR=$PWD
 echo "\$PWD: $PWD"
 # WERKSTATT set in .bashrc, thus unset remotly
-WERKSTATT=${WERKSTATT:=1}
+WERKSTATT=$HOME/werkstatt
 echo "\$WERKSTATT: $WERKSTATT"
+IFLOCAL=${IFLOCAL:=1}
+echo "\$IFLOCAL: $IFLOCAL"
 TESTDIR=$PDIR/test
 export TESTDIR
 
-FILE1=beg-end.el
-FILE2=ar-subr.el
-FILE4=thingatpt-utils-core.el
-FILE5=thing-at-point-utils.el
-FILE6=numbers-at-point.el
+SETUP=$TESTDIR/numbers-at-point-tests.el
+
+FILE1=$WERKSTATT/thingatpt-utils-core/ar-subr.el
+FILE2=$WERKSTATT/thingatpt-utils-core/beg-end.el
+FILE3=$WERKSTATT/thingatpt-utils-core/ar-thingatpt-basic-definitions.el
+FILE4=$WERKSTATT/thingatpt-utils-core/thingatpt-utils-core.el
+FILE5=$WERKSTATT/thing-at-point-utils/thing-at-point-utils.el
+FILE6=$WERKSTATT/numbers-at-point/numbers-at-point.el
 
 TEST1=test/numbers-at-point-setup-tests.el
 TEST2=test/numbers-at-point-tests.el
@@ -69,14 +74,31 @@ fi
 
 echo "\$EMACS: $EMACS"
 
+h1 () {
+    $EMACS -Q --batch \
+--eval "(message (emacs-version))" \
+-load $FILE1 \
+-load $FILE2 \
+-load $FILE3 \
+-load $FILE4 \
+-load $FILE5 \
+-load $FILE6 \
+-load $SETUP \
+\
+-load $TEST1 \
+-f ert-run-tests-batch-and-exit
+}
+
 hier () {
     $EMACS -Q --batch \
 --eval "(message (emacs-version))" \
 -load $FILE1 \
 -load $FILE2 \
+-load $FILE3 \
 -load $FILE4 \
 -load $FILE5 \
 -load $FILE6 \
+-load $SETUP \
 \
 -load $TEST1 \
 -load $TEST2 \
@@ -98,7 +120,7 @@ entfernt () {
 -f ert-run-tests-batch-and-exit
 }
 
-if [ $WERKSTATT -eq 0 ]; then
+if [ $IFLOCAL -eq 0 ]; then
     while getopts 123456789abcdefghijklmnopqrstuvx option
     do
         case $option in

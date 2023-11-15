@@ -1,6 +1,6 @@
 ;;; thingatpt-utils-core.el --- th-at-point edit functions -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2020 Andreas Röhler, unless
+;; Copyright (C) 2010-2023 Andreas Röhler, unless
 ;; indicated otherwise
 
 ;; Author: Andreas Röhler <andreas.roehler@easy-emacs.de>, unless
@@ -29,11 +29,11 @@
 ;; Delivers a set of functions to return, mover over or
 ;; manipulate a given THING. THING may be a well known
 ;; form as word, paragraph, but also a char class as
-;; `alnum' or a new defined thing.
+;; ‘alnum’ or a new defined thing.
 
-;; For example `ar-alnum-atpt' will return all
+;; For example ‘ar-alnum-atpt’ will return all
 ;; alpha-numerical chars below and around cursor as a
-;; string. `ar-bounds-of-alnum-atpt' returns the
+;; string. ‘ar-bounds-of-alnum-atpt’ returns the
 ;; borders of that string as a list and so on.
 
 ;; Presently for a given THING the following is
@@ -92,7 +92,7 @@
 
 ;; To see what's implemented, consult contents of
 ;; variables at the end of this file as
-;; `ar-paired-delimit-aktiv', `ar-paired-delimited-passiv', etc.
+;; ‘ar-paired-delimit-aktiv’, ‘ar-paired-delimited-passiv’, etc.
 
 ;; Call one of the test-functions `C-u ar-th-delimtest'
 ;; with come chars in scratch-buffer
@@ -110,32 +110,32 @@
 ;; around it call ar-parentize-word-atpt, etc.
 
 ;; Move-functions of this package differ from common
-;; behaviour in such, as `ar-forward-word-atpt' stops
+;; behaviour in such, as ‘ar-forward-word-atpt’ stops
 ;; not after THING, but on the last char of
 ;; THING. That's in order to enable a call of
 ;; thing-at-point functions at the end
 ;; position. Otherwise, when cursor stops after word
-;; (THING) as does `forward-word', `ar-word-atpt' would return
+;; (THING) as does ‘forward-word’, ‘ar-word-atpt’ would return
 ;; nil.
 
-;; To see other features, maybe try `ar-separate-list-atpt'
-;; or `ar-comment-list-atpt' while point is inside a
+;; To see other features, maybe try ‘ar-separate-list-atpt’
+;; or ‘ar-comment-list-atpt’ while point is inside a
 ;; list. Try it again with an abstract char-class as
-;; [:alnum:], i.e. try `ar-comment-alnum-atpt',
-;; `ar-brace-alnum-atpt' etc.
+;; [:alnum:], i.e. try ‘ar-comment-alnum-atpt’,
+;; ‘ar-brace-alnum-atpt’ etc.
 
 ;; This utility comes with test-functions which return
 ;; the possible results of most functions (exception
 ;; are the kill-fns). Call th-test, th-mv-test
 ;; or th-delimtest over text. That-delimtest
 ;; changes but restores the buffer. Customize the speed
-;; of execution via `ar-th-test-delay'
+;; of execution via ‘ar-th-test-delay’
 
 ;; Diffs to basics of required thingatpt.el:
-;; `bounds-of-thing-at-point' is replaced by a new
-;; `ar-th-bounds', which now first searches
+;; ‘bounds-of-thing-at-point’ is replaced by a new
+;; ‘ar-th-bounds’, which now first searches
 ;; backward. As a consequence several
-;; `beginning-op-at' and `end-op-at' constructs had
+;; ‘beginning-op-at’ and ‘end-op-at’ constructs had
 ;; to be rewritten.
 
 ;; Behavior in general is not validating; i.e. if you
@@ -163,10 +163,10 @@
 
 ;; Remove comments and put the cursor somewhere into the first
 ;; string:
-;; `ar-doublequoted-atpt' will return it, copied into the kill-ring,
+;; ‘ar-doublequoted-atpt’ will return it, copied into the kill-ring,
 ;; enabling yanking it and a lot of further actions.
 
-;; `ar-doublequoted-atpt' here is to
+;; ‘ar-doublequoted-atpt’ here is to
 ;; (global-set-key [(super \")] 'ar-doublequoted-atpt)
 
 ;; alike a range of similar commands exist:
@@ -255,6 +255,7 @@
 (require 'ar-subr)
 (require 'beg-end)
 (require 'hideshow)
+(require 'ar-thingatpt-basic-definitions)
 (defconst Emacs-Werkstatt-version "1.5")
 
 (when (featurep 'xemacs) (require 'overlay))
@@ -267,20 +268,20 @@
 (defcustom sort-fold-case nil
   "Whether alphabetic case affects the sort order
 
-Used by `ar-sort-numbers-subr'"
+Used by ‘ar-sort-numbers-subr’"
 
   :type 'boolean
   :group 'werkstatt)
 
-(defcustom ar-generic-match-p nil
-  "Whether forms match ignore syntax
+(defvar ar-match-in-string-p nil
+  "If an expression starts inside a string.
 
-i.e. match inside a string or comment.
+Internal use only.")
 
-Default is nil"
+(defvar ar-match-in-comment-p nil
+  "If an expression starts inside a comment.
 
-  :type 'boolean
-  :group 'werkstatt)
+Internal use only.")
 
 (defcustom ar-werkstatt-hs-minor-mode-p nil
   ""
@@ -315,7 +316,7 @@ Default is nil"
     "Rexexp to specify the character class
 Follows word-syntax. Use something like
    \"[a-zA-ZäöüßÄÖÜ0-9]\" maybe instead.
-`unibyte' and `multibyte' class is unused i.e. set to \".\""
+‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -323,7 +324,7 @@ Follows word-syntax. Use something like
   (defcustom alpha "[a-zA-ZäöüßÄÖÜ]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -331,7 +332,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom ascii "[\000-\177]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -339,7 +340,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom blank "[ \t]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -347,7 +348,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom cntrl "[\000-\006]\016-\037]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -355,7 +356,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom digit "[0-9]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -363,7 +364,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom graph "[\041-\177\241-\377]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -371,7 +372,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom lower "[a-zäöüß]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -379,7 +380,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom multibyte "[.]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -387,7 +388,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom nonascii "[^\040-\177]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -395,7 +396,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom print "[\041-\177\241-\377]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -403,7 +404,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom punct "[.,-_:;?!]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -411,7 +412,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom space "[ \t]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -419,7 +420,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom unibyte "[.]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -427,7 +428,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom upper "[A-ZÄÖÜ]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -435,7 +436,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
   (defcustom xdigit "[0-9.,]"
     "Rexexp to specify the character class
 Change it, if you want to pick strings differently.
-XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
+XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\""
     :type 'regexp
     :group 'werkstatt))
 
@@ -460,8 +461,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:alnum:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:alnum:]"))
-	   (and (< 0 (skip-chars-forward "[:alnum:]"))
-		(point))))))
+           (point)))))
 
 (put 'alnum 'backward-op-at
      (lambda ()
@@ -490,8 +490,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:alpha:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:alpha:]"))
-	   (and (< 0 (skip-chars-forward "[:alpha:]"))
-		(point))))))
+           (point)))))
 
 (put 'alpha 'backward-op-at
      (lambda ()
@@ -520,8 +519,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:ascii:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:ascii:]"))
-	   (and (< 0 (skip-chars-forward "[:ascii:]"))
-		(point))))))
+           (point)))))
 
 (put 'ascii 'backward-op-at
      (lambda ()
@@ -550,8 +548,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:blank:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:blank:]"))
-	   (and (< 0 (skip-chars-forward "[:blank:]"))
-		(point))))))
+           (point)))))
 
 (put 'blank 'backward-op-at
      (lambda ()
@@ -580,8 +577,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:cntrl:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:cntrl:]"))
-	   (and (< 0 (skip-chars-forward "[:cntrl:]"))
-		(point))))))
+           (point)))))
 
 (put 'cntrl 'backward-op-at
      (lambda ()
@@ -610,8 +606,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:digit:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:digit:]"))
-	   (and (< 0 (skip-chars-forward "[:digit:]"))
-		(point))))))
+           (point)))))
 
 (put 'digit 'backward-op-at
      (lambda ()
@@ -640,8 +635,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:graph:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:graph:]"))
-	   (and (< 0 (skip-chars-forward "[:graph:]"))
-		(point))))))
+           (point)))))
 
 (put 'graph 'backward-op-at
      (lambda ()
@@ -670,8 +664,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:lower:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:lower:]"))
-	   (and (< 0 (skip-chars-forward "[:lower:]"))
-		(point))))))
+           (point)))))
 
 (put 'lower 'backward-op-at
      (lambda ()
@@ -700,8 +693,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:nonascii:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:nonascii:]"))
-	   (and (< 0 (skip-chars-forward "[:nonascii:]"))
-		(point))))))
+           (point)))))
 
 (put 'nonascii 'backward-op-at
      (lambda ()
@@ -730,8 +722,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:print:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:print:]"))
-	   (and (< 0 (skip-chars-forward "[:print:]"))
-		(point))))))
+           (point)))))
 
 (put 'print 'backward-op-at
      (lambda ()
@@ -760,8 +751,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:punct:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:punct:]"))
-	   (and (< 0 (skip-chars-forward "[:punct:]"))
-		(point))))))
+           (point)))))
 
 (put 'punct 'backward-op-at
      (lambda ()
@@ -790,8 +780,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:space:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:space:]"))
-	   (and (< 0 (skip-chars-forward "[:space:]"))
-		(point))))))
+           (point)))))
 
 (put 'space 'backward-op-at
      (lambda ()
@@ -820,8 +809,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:upper:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:upper:]"))
-	   (and (< 0 (skip-chars-forward "[:upper:]"))
-		(point))))))
+           (point)))))
 
 (put 'upper 'backward-op-at
      (lambda ()
@@ -850,8 +838,7 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
        (if (< 0 (skip-chars-forward "[:xdigit:]"))
 	   (point)
 	 (when (< 0 (skip-chars-forward "^[:xdigit:]"))
-	   (and (< 0 (skip-chars-forward "[:xdigit:]"))
-		(point))))))
+           (point)))))
 
 (put 'xdigit 'backward-op-at
      (lambda ()
@@ -867,136 +854,154 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Braced
 (put 'braced 'beginning-op-at
      (lambda ()
-       (if (ignore-errors (char-equal ?{ (char-after)))
-           (list (point) (1+ (point)))
-	 (beginning-of-form-base "{" "}" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p))))
+       (beginning-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'braced 'end-op-at
      (lambda ()
-       (when (ignore-errors (char-equal ?{ (char-after)))
-         (forward-char 1))
-       (end-of-form-base "{" "}" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p)))
+       (end-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'braced 'forward-op-at
      (lambda ()
        (unless (eobp)
-	 (forward-char 1)
-	 (ar-char-paren-delimiters-forward ?{ ar-thing-escaped ar-thing-inside-comment 'braced))))
+         (end-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+
+(put 'braced 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+
+;; Symboled
+(put 'symboled 'beginning-op-at
+     (lambda ()
+       (beginning-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
+(put 'symboled 'end-op-at
+     (lambda ()
+       (end-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
+(put 'symboled 'forward-op-at
+     (lambda ()
+       (unless (eobp)
+         (end-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+
+(put 'symboled 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
 
 ;; Bracketed
 (put 'bracketed 'beginning-op-at
      (lambda ()
-       (if (ignore-errors (char-equal ?\[ (char-after)))
-           (list (point) (1+ (point)))
-	 (beginning-of-form-base "\\[" "\]" nil 'move 0 nil t 'ar-syntax ar-generic-match-p))))
+       (beginning-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p)))
 
 (put 'bracketed 'end-op-at
      (lambda ()
-       (when (ignore-errors (char-equal ?\[ (char-after)))
-         (forward-char 1))
-       (end-of-form-base "\\[" "\]" nil 'move 0 nil t 'ar-syntax ar-generic-match-p)))
+       (end-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p)))
 
 (put 'bracketed 'forward-op-at
      (lambda ()
        (unless (eobp)
-	 (forward-char 1)
-	 (ar-char-paren-delimiters-forward ?\[ ar-thing-escaped ar-thing-inside-comment 'bracketed))))
+         (end-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p t))))
+
+(put 'bracketed 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p t))))
 
 ;; Lesserangled
 (put 'lesserangled 'beginning-op-at
      (lambda ()
-       (if (ignore-errors (char-equal ?< (char-after)))
-           (list (point) (1+ (point)))
-	 (beginning-of-form-base "<" ">" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p))))
+       (beginning-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'lesserangled 'end-op-at
      (lambda ()
-       (when (ignore-errors (char-equal ?< (char-after)))
-         (forward-char 1))
-       (end-of-form-base "<" ">" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p)))
+       (end-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'lesserangled 'forward-op-at
      (lambda ()
        (unless (eobp)
-	 (forward-char 1)
-	 (ar-char-paren-delimiters-forward ?< ar-thing-escaped ar-thing-inside-comment 'lesserangled))))
+         (end-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+
+(put 'lesserangled 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
 
 ;; Greaterangled
 (put 'greaterangled 'beginning-op-at
      (lambda ()
-       (if (ignore-errors (char-equal ?> (char-after)))
-           (list (point) (1+ (point)))
-	 (beginning-of-form-base ">" "<" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p))))
+       (beginning-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'greaterangled 'end-op-at
      (lambda ()
-       (when (ignore-errors (char-equal ?> (char-after)))
-         (forward-char 1))
-       (end-of-form-base ">" "<" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p)))
+       (end-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'greaterangled 'forward-op-at
      (lambda ()
        (unless (eobp)
-	 (forward-char 1)
-	 (ar-char-paren-delimiters-forward ?> ar-thing-escaped ar-thing-inside-comment 'greaterangled))))
+         (end-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+
+(put 'greaterangled 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
 
 ;; Curvedsinglequoted
 (put 'curvedsinglequoted 'beginning-op-at
      (lambda ()
-       (if (ignore-errors (char-equal ?‘ (char-after)))
-           (list (point) (1+ (point)))
-	 (beginning-of-form-base "‘" "’" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p))))
+       (beginning-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'curvedsinglequoted 'end-op-at
      (lambda ()
-       (when (ignore-errors (char-equal ?‘ (char-after)))
-         (forward-char 1))
-       (end-of-form-base "‘" "’" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p)))
+       (end-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'curvedsinglequoted 'forward-op-at
      (lambda ()
        (unless (eobp)
-	 (forward-char 1)
-	 (ar-char-paren-delimiters-forward ?‘ ar-thing-escaped ar-thing-inside-comment 'curvedsinglequoted))))
+         (end-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+
+(put 'curvedsinglequoted 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
 
 ;; Curveddoublequoted
 (put 'curveddoublequoted 'beginning-op-at
      (lambda ()
-       (if (ignore-errors (char-equal ?“ (char-after)))
-           (list (point) (1+ (point)))
-	 (beginning-of-form-base "“" "”" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p))))
+       (beginning-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'curveddoublequoted 'end-op-at
      (lambda ()
-       (when (ignore-errors (char-equal ?“ (char-after)))
-         (forward-char 1))
-       (end-of-form-base "“" "”" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p)))
+       (end-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'curveddoublequoted 'forward-op-at
      (lambda ()
        (unless (eobp)
-	 (forward-char 1)
-	 (ar-char-paren-delimiters-forward ?“ ar-thing-escaped ar-thing-inside-comment 'curveddoublequoted))))
+         (end-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+
+(put 'curveddoublequoted 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
 
 ;; Parentized
 (put 'parentized 'beginning-op-at
      (lambda ()
-       (if (ignore-errors (char-equal ?\( (char-after)))
-           (list (point) (1+ (point)))
-	 (beginning-of-form-base "\(" "\)" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p))))
+       (beginning-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'parentized 'end-op-at
      (lambda ()
-       (when (ignore-errors (char-equal ?\( (char-after)))
-         (forward-char 1))
-       (end-of-form-base "\(" "\)" nil 'move 0 nil nil 'ar-syntax ar-generic-match-p)))
+       (end-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'parentized 'forward-op-at
      (lambda ()
        (unless (eobp)
-	 (forward-char 1)
-	 (ar-char-paren-delimiters-forward ?\( ar-thing-escaped ar-thing-inside-comment 'parentized))))
+         (end-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
 
+(put 'parentized 'backward-op-at
+     (lambda ()
+       (unless (bobp)
+         (beginning-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
 
 ;; Paired delimited forms end
 
@@ -1005,1606 +1010,220 @@ XEmacs-users: `unibyte' and `multibyte' class is unused i.e. set to \".\""
 ;; Backslashed
 (put 'backslashed 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?\\)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?\\ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'backslashed 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?\\)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?\\ ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'backslashed 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?\\ ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'backslashed 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?\\ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Backticked
 (put 'backticked 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?`)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?` ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'backticked 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?`)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?` ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'backticked 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?` ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'backticked 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?` ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Coloned
 (put 'coloned 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?:)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?: ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'coloned 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?:)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?: ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'coloned 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?: ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'coloned 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?: ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Dollared
 (put 'dollared 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?$)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?$ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'dollared 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?$)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?$ ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'dollared 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?$ ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'dollared 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?$ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Doublequoted
 (put 'doublequoted 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?\")
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?\" ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'doublequoted 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?\")
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?\" ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'doublequoted 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?\" ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'doublequoted 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?\" ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Equalized
 (put 'equalized 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?=)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?= ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'equalized 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?=)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?= ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'equalized 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?= ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'equalized 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?= ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Hyphened
 (put 'hyphened 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?-)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?- ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'hyphened 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?-)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?- ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'hyphened 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?- ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'hyphened 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?- ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Singlequoted
 (put 'singlequoted 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?')
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?' ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'singlequoted 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?')
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?' ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'singlequoted 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?' ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'singlequoted 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?' ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Slashed
 (put 'slashed 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?/)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?/ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'slashed 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?/)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?/ ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'slashed 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?/ ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'slashed 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?/ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Stared
 (put 'stared 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?*)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?* ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'stared 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?*)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?* ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'stared 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?* ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'stared 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?* ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Underscored
 (put 'underscored 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ?_)
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?_ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'underscored 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ?_)
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?_ ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'underscored 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?_ ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'underscored 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?_ ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Whitespaced
 (put 'whitespaced 'beginning-op-at
      (lambda ()
-       (let ((beg
-	      (if ar-scan-whole-buffer
-		  (ar-beginning-of-unary-delimited-atpt ? )
-                ;; expects being behind opening delimiter
-                ;; if opening delimiter should match, set ar-scan-whole-buffer to ‘t’
-                (ar-char-delimiters-beginning ?  ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer))))
-         (when beg
-           (cons beg (1+ beg))))))
+       (beginning-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'whitespaced 'end-op-at
      (lambda ()
-       (when (char-equal (char-after) ? )
-         (forward-char 1))
-       (let ((end (ar-char-delimiters-end ?  ar-thing-escaped ar-thing-inside-comment)))
-         (when end
-           (cons (1- end) end)))))
+       (end-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
 
 (put 'whitespaced 'forward-op-at
      (lambda ()
-       (ar-char-delimiters-forward ?  ar-thing-escaped ar-thing-inside-comment)))
+       (end-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
 
 (put 'whitespaced 'backward-op-at
      (lambda ()
-       (ar-char-delimiters-beginning ?  ar-thing-escaped ar-thing-inside-comment ar-scan-whole-buffer)))
+       (beginning-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+
 
 ;; Unpaired delimited forms end
-
-
-;; Expression
-(put 'expression 'beginning-op-at
-     (lambda ()
-       (ar-backward-expression)))
-
-(put 'expression 'end-op-at
-     (lambda ()
-       (ar-forward-expression)))
-
-;; Block
-(put 'block 'beginning-op-at
-     'ar-backward-block)
-
-(put 'block 'end-op-at
-     (lambda ()
-       (ar-forward-block)))
-
-;; Block-Or-Clause
-(put 'block-or-clause 'beginning-op-at
-     (lambda ()
-       (ar-backward-block-or-clause)))
-
-(put 'block-or-clause 'end-op-at
-     (lambda ()
-       (ar-forward-block-or-clause)))
-
-;; Char
-(put 'char 'beginning-op-at
-     (lambda ()(point) ))
-
-(put 'char 'end-op-at
-     (lambda ()(unless (eobp) (goto-char (1+ (point))))))
-
-(put 'char 'forward-op-at
-     (lambda ()(unless (eobp) (goto-char (1+ (point))))))
-
-;; Def-Or-Class
-(put 'def-or-class 'beginning-op-at
-     (lambda ()
-       (ar-backward-def-or-class)))
-
-(put 'def-or-class 'end-op-at
-     (lambda ()
-       (ar-forward-def-or-class)))
-
-;; Class
-(put 'class 'beginning-op-at
-     (lambda ()
-       (ar-backward-class)))
-
-(put 'class 'end-op-at
-     (lambda ()
-       (ar-forward-class)))
-
-;; Clause
-(put 'clause 'beginning-op-at
-     (lambda ()
-       (ar-backward-clause)))
-
-(put 'clause 'end-op-at
-     (lambda ()
-       (ar-forward-clause)))
-
-;; Def
-(put 'def 'beginning-op-at
-     (lambda ()
-       (ar-backward-def)))
-
-(put 'def 'end-op-at
-     (lambda ()
-       (ar-forward-def)))
-
-;; Statement
-(put 'statement 'beginning-op-at
-     (lambda ()
-       (ar-backward-statement)))
-
-(put 'statement 'end-op-at
-     (lambda ()
-       (ar-forward-statement)))
-
-(put 'statement 'backward-op-at
-     (lambda ()
-       (ar-backward-statement)))
-
-(put 'statement 'forward-op-at
-     (lambda ()
-       (ar-forward-statement)))
-
-;; String
-(defcustom th-string-beg-delimiter "»‘“'\""
-  "Specify the string start char."
-  :type 'string
-  :group 'werkstatt)
-
-(defcustom th-string-end-delimiter "«”’'\""
-  "Specify the string end char."
-  :type 'string
-  :group 'werkstatt)
-
-;; String
-(put 'string 'beginning-op-at
-     (lambda ()
-       (save-restriction
-         ;; (widen)
-         (or (and ar-use-parse-partial-sexp
-                  (let* ((pps (parse-partial-sexp (point-min) (point)))
-                         (pos8 (nth 8 pps)))
-                    (when (nth 3 pps)
-                      (goto-char pos8))))
-             (member (char-before) (mapcar 'identity th-string-beg-delimiter))
-             ;; (re-search-backward (concat "[" th-string-beg-delimiter "]+") nil 'move 1)
-             (and (< 0 (abs (skip-chars-backward (concat "^" (char-to-string 8222) th-string-beg-delimiter))))
-                  (prog1 (member (char-before) (mapcar 'identity th-string-beg-delimiter))
-                    (backward-char))
-                  )
-             (when (or (eq 15 (car (syntax-after (point))))(eq 7 (car (syntax-after (point)))))
-               (list (point) (save-excursion (skip-chars-forward (char-to-string (char-after)))(point)))))
-         (cons (point) (1+ (point)))
-         )))
-
-(put 'string 'end-op-at
-     (lambda ()
-       (let (erg)
-         (if (member (char-after) (list ?' ?\"))
-             (progn
-               (forward-sexp)
-               (cons (1- (point)) (point)))
-           (skip-chars-forward (concat "^" (char-to-string (setq erg (reverse-char (char-after))))))
-           (when (eq (char-after) erg)
-             (forward-char 1)
-             (cons (1- (point)) (point)))))))
-
-(put 'string 'forward-op-at
-     (lambda ()
-       (and (< 0 (abs (skip-chars-forward "^\"")))
-            (eq (char-after) 34)
-            (forward-char 2))))
-
-(put 'string 'backward-op-at
-     (lambda ()
-       (when (and (< 0 (abs (skip-chars-backward "^\"")))
-                  (eq (char-before) 34))
-         (backward-char 1))))
-
-;; ;; Strings
-;; (put 'string 'beginning-op-at
-;;      (lambda ()
-;;        (save-restriction
-;;       (widen)
-;;       (if ar-use-parse-partial-sexp
-;;           (let* ((pps (parse-partial-sexp (point-min) (point)))
-;;                  (pos8 (nth 8 pps)))
-;;             (when (nth 3 pps)
-;;               (goto-char pos8)))
-;;         (when
-;;             (re-search-backward "\\([^\\\\]\\)\\(\"\\)" nil 'move 1)
-;;           (goto-char (match-beginning 2))))
-;;       (when (looking-at "\"*")
-;;         (list (match-beginning 0) (match-end 0))))))
-
-;; (put 'string 'end-op-at
-;;      (lambda ()
-;;        (save-restriction
-;;       (widen)
-;;       (forward-char 1)
-;;       (if ar-use-parse-partial-sexp
-;;           (let* ((orig (point))
-;;                  (pps (parse-partial-sexp (point-min) (point)))
-;;                  (char (char-to-string (nth 3 pps)))
-;;                  (done t))
-;;             (progn
-;;               (while (and (not (eobp)) (prog1 done (forward-char 1))
-;;                           (setq done (skip-chars-forward (concat "^" char)))
-
-;;                           (nth 5 (parse-partial-sexp orig (point)))))
-;;               (when (and (< orig (point))(looking-at char))
-;;                 (list (match-beginning 0) (match-end 0)))))
-;;         (when (re-search-forward "[^\\\\]\"" nil 'move 1)
-;;           (list (match-beginning 0) (match-end 0)))))))
-
-;; Abbrev
-(put 'abbrev 'beginning-op-at
-     (lambda ()
-       (when
-           (looking-at "[[:alnum:]]")
-         (skip-chars-backward "[:alnum:].-")(point))))
-
-(put 'abbrev 'end-op-at
-     (lambda ()
-       (skip-chars-forward "[:alnum:].-")(point)))
-
-;; Acronym
-(put 'acronym 'beginning-op-at
-     (lambda ()
-       (ar-th-gotobeg 'symbol)))
-
-(put 'acronym 'end-op-at
-     (lambda ()
-       (when (or (looking-at "[\({]\\([A-Z][A-Za-z -]+\\)[\)}]")
-                 (looking-at "\\(\\<[A-Z][A-Za-z]*[A-Z][A-Za-z]*\\>\\)"))
-         (goto-char (match-end 0)))))
-
-;; Buffer
-(put 'buffer 'beginning-op-at
-     (lambda ()
-       (let ((pos (point-min)))
-         (unless (eq (point) pos)
-           (goto-char pos)
-           pos))))
-
-(put 'buffer 'end-op-at
-     (lambda ()
-       (let ((pos (point-max)))
-         (unless (eq (point) pos)
-           (goto-char pos)
-           pos))))
-
-;; Comment
-(put 'comment 'beginning-op-at
-     (lambda ()
-       (let* ((nesting (not (or (string= "" comment-end)(eq 10 comment-end))))
-              (erg (when nesting
-                     (if (looking-at comment-start)
-                         (cons (match-beginning 0) (match-end 0))
-                       (beginning-of-form-base comment-start comment-end nil 'move 1 t)))))
-         (unless erg
-           (when (looking-at comment-start)
-             (setq erg (cons (match-beginning 0) (match-end 0)))
-             (skip-chars-backward " \t\r\n\f"))
-           (while (and (setq erg (nth 8 (parse-partial-sexp (point-min) (point))))
-                       (goto-char erg)
-                       (skip-chars-backward " \t\r\n\f")))
-           (skip-chars-forward " \t\r\n\f")
-           (when (looking-at comment-start)
-             (setq erg (cons (match-beginning 0) (match-end 0)))))
-         erg)))
-
-(put 'comment 'end-op-at
-     (lambda ()
-       (let* ((nesting (not (or (string= "" comment-end)(eq 10 comment-end))))
-              (erg
-               (when nesting
-                 (when (looking-at (concat "[ \t]*" (regexp-quote comment-start)))
-                   (progn
-                     (goto-char (match-end 0))
-                     (ignore-errors (end-of-form-base comment-start comment-end nil 'move 0 t)))))))
-         (unless erg
-           (when
-               (looking-at (concat "[ \t]*" (regexp-quote comment-start)))
-             (setq erg (cons (1- (line-end-position)) (line-end-position)))
-             (while (and (not (eobp))(forward-line 1)(or (ar-empty-line-p)(looking-at (concat "[ \t]*" (regexp-quote comment-start)))))
-               (setq erg (cons (1- (line-end-position)) (line-end-position))))))
-         erg)))
-
-(defun comment-forward-op-intern ()
-  (let ((orig (point)))
-    (end-of-line)
-    (setq orig (point))
-    (unless (eobp)
-      (skip-chars-forward " \t\r\n\f")
-      (if (looking-at comment-start)
-          (comment-forward-op-intern)
-        (goto-char orig)))))
-
-(put 'comment 'forward-op-at
-     (lambda ()
-       (let ((orig (point)))
-         (if (string= comment-end "")
-             (comment-forward-op-intern)
-           (search-forward comment-end nil t)
-           (comment-forward-op-intern))
-         (when (< orig (point)) (point)))))
-
-(defun backward-op-at-intern ()
-  (let ((this (point))
-        pps)
-    (skip-chars-backward " \t\r\n\f")
-    (unless (bobp)
-      (forward-char -1)
-      (if (setq pps (and (nth 4 (parse-partial-sexp (point-min) (point)))
-                         (nth 8 (parse-partial-sexp (point-min) (point)))))
-          (progn
-            (goto-char pps)
-            (backward-op-at-intern))
-        (goto-char this)))))
-
-(put 'comment 'backward-op-at
-     (lambda ()
-       (let ((orig (point))
-             (pps (when (nth 4 (parse-partial-sexp (point-min) (point)))
-                    (nth 8 (parse-partial-sexp (point-min) (point))))))
-         (if pps
-             (progn
-               (goto-char pps)
-               (backward-op-at-intern))
-           (when (search-backward comment-start nil 'move 1)
-             (backward-op-at-intern)))
-         (when (< (point) orig) (point)))))
-
-;;; CSV
-;; Inspired by
-;;; csv-mode.el --- major mode for editing comma-separated value files
-;; Author: Francis J. Wright <F.J.Wright at qmul.ac.uk>
-;; URL: http://centaur.maths.qmul.ac.uk/Emacs/
-(defcustom ar-csv-separator-atpt ";"
-  "Char to distinguish datasets in a `comma`-separated row"
-  :type 'string
-  :group 'werkstatt)
-;; (when (boundp 'csv-separators)
-;; (setq ar-separator-atpt csv-separators))
-
-(put 'csv 'beginning-op-at
-     (lambda ()
-       (skip-chars-backward (concat "^" ar-csv-separator-atpt))(point)))
-
-(put 'csv 'end-op-at
-     (lambda ()
-       (skip-chars-forward (concat "^" ar-csv-separator-atpt))(point)))
-
-;; DATE
-(put 'date 'beginning-op-at
-     (lambda ()
-       ;; provide for the case, we are over a
-       ;; string-delimiter as `"'
-       (when
-	   (and (not (eq 32 (if (featurep 'xemacs)
-				(encode-char (char-after) 'ucs)
-                              (char-after))))
-		(or (bobp)
-		    (eq 32 (if (featurep 'xemacs)
-                               (encode-char (char-before) 'ucs)
-                             (char-before)))))
-	 (forward-char 1)
-	 ;; as the bounds-function checks position, correct it
-	 ;; (setq th-orig 1)
-	 )
-       (skip-chars-backward "0-9 .-")
-       (skip-chars-forward " ")(point)))
-
-(put 'date 'end-op-at
-     (lambda ()
-       (skip-chars-forward "0-9 .-")
-       (skip-chars-backward " ")(point)))
-
-;; Defun
-(put 'defun 'beginning-op-at (lambda (&optional arg) (beginning-of-defun (or arg 1))(point)))
-
-(put 'defun 'end-op-at (lambda (&optional arg)(end-of-defun (or arg 1))(point)))
-
-(defvar delimited-end-pos nil)
-;; Delimited
-(defun delimited-atpt-intern (delimited-list-end orig)
-  (let (start-char delimited-start-pos-intern delimited-end-pos-intern)
-    (save-excursion
-      (if
-	  (looking-at (concat "[" th-beg-delimiter "]"))
-	  (cond ((member (char-after) (list ?‘ ?> ?<))
-		 ;; https://lists.gnu.org/archive/html/bug-gnu-emacs/2020-01/msg00549.html
-		 (setq start-char (char-after))
-		 (setq delimited-start-pos-intern (point))
-		 (forward-char 1)
-		 (skip-chars-forward (concat "^" (char-to-string (ar--return-complement-char-maybe start-char))) delimited-list-end)
-		 (and (looking-at (char-to-string (ar--return-complement-char-maybe start-char))) (setq delimited-end-pos-intern (point))))
-		(t (and (setq delimited-start-pos-intern (point))
-			(setq start-char (char-after))
-			(progn (forward-sexp) (< orig (point)))
-			(cond  ((and (member start-char (list ?<))
-				     (eq (char-after) (ar--return-complement-char-maybe start-char)))
-				(setq delimited-end-pos-intern (point)))
-			       ((and (member start-char (list ?<))
-				     (not (eq (char-after) (ar--return-complement-char-maybe start-char))))
-				;; do nothing
-				)
-			       (t (setq delimited-end-pos-intern (1- (point)))))
-			)))
-	(when (looking-at (concat "[" ar-delimiters-atpt "]"))
-	  (setq start-char (char-after))
-	  (setq delimited-start-pos-intern (point))
-	  (forward-char 1)
-	  (while
-	      (< 0 (abs (skip-chars-forward (concat "^" (concat (char-to-string start-char) (char-to-string (ar--return-complement-char-maybe start-char)))) delimited-list-end)))
-	    (not (and delimited-start-pos-intern delimited-end-pos-intern))
-	    (and (looking-at (concat "[" th-end-delimiter ar-delimiters-atpt "]"))
-		 (setq delimited-end-pos-intern (point))
-		 (setq delimited-start-pos-intern (search-backward (char-to-string (ar--return-complement-char-maybe (char-after (point)))) nil t)))))))
-    (and delimited-start-pos-intern delimited-end-pos-intern (cons delimited-start-pos-intern delimited-end-pos-intern))))
-
-(put 'delimited 'beginning-op-at
-     (lambda ()
-       (setq delimited-end-pos nil)
-       (let* ((orig (point))
-	      (begdel (concat th-beg-delimiter ar-delimiters-atpt))
-              (pps (parse-partial-sexp (point-min) (point)))
-	      (delimited-list-start (or (nth 8 pps) (nth 1 pps)))
-	      (counter 0)
-	      opener
-	      (delimited-list-end
-	       (and delimited-list-start
-		    (save-excursion
-		      (progn (goto-char (or (nth 8 pps) (nth 1 pps)))
-			     (setq opener (char-after))
-			     (progn
-			       (ignore-errors (forward-sexp))
-			       (and
-				(< orig (point))
-				(looking-back (char-to-string (ar--return-complement-char-maybe opener)) delimited-list-start)
-				(point)))))))
-	      erg delimited-start-pos)
-	 (save-restriction
-	   (and delimited-list-start delimited-list-end (narrow-to-region delimited-list-start delimited-list-end))
-	   ;; when started from list-end, list is the delimited
-	   (save-excursion
-	     (and
-	      delimited-list-end
-	      (progn (goto-char delimited-list-end)
-		     (eq orig (1- (point))))
-	      (looking-back (char-to-string (ar--return-complement-char-maybe opener)) delimited-list-start)
-	      (setq delimited-start-pos delimited-list-start
-		    delimited-end-pos (1- delimited-list-end))))
-	   (while (not (or (and delimited-start-pos delimited-end-pos) (and (< 99 counter) (bopb))))
-	     (cond
-	      ((looking-at (concat "[" begdel "]"))
-	       (setq erg (delimited-atpt-intern delimited-list-end orig))
-	       (if (and (car-safe erg) (cdr-safe erg))
-		   (setq delimited-start-pos (car-safe erg)
-			 delimited-end-pos (cdr-safe erg))
-		 (unless (bobp) (backward-char))))
-	      ((looking-back (concat "[" begdel "]") (line-beginning-position))
-	       (goto-char (match-beginning 0))
-	       (setq erg (delimited-atpt-intern delimited-list-end orig)))
-	      (t (setq counter (1+ counter))
-		 (unless (or (bobp)
-			     (< 0 (abs (skip-chars-backward (concat "^" begdel) delimited-list-start))))
-		   (backward-char))))))
-	 (cons delimited-start-pos (1+ delimited-start-pos)))))
-
-(put 'delimited 'end-op-at
-     (lambda ()
-       (cons delimited-end-pos (1+ delimited-end-pos))))
-
-(put 'delimited 'forward-op-at
-     (lambda ()
-       (let ((begdel (concat th-beg-delimiter ar-delimiters-atpt)))
-         (when (re-search-forward (concat "[" begdel "]") nil t 1)
-           (goto-char (match-beginning 0)))
-         (funcall (get 'delimited 'end-op-at)))))
-
-(defun ar-set-delimiter-zeichen ()
-  (setq ar-delimiter-zeichen-atpt
-        (if (featurep 'xemacs)
-            (encode-char (char-after) 'ucs)
-          (char-after))))
-
-(defvar ar-delimiter-zeichen-atpt nil
-  "Delimiter char found at place, search it backward then")
-(make-variable-buffer-local 'ar-delimiter-zeichen-atpt)
-
-(defvar ar-delimiter-string-atpt nil
-  "Delimiter string found at place, search it backward then")
-(make-variable-buffer-local 'ar-delimiter-string-atpt)
-
-(defcustom ar-use-parse-partial-sexp t
-  "When nil, parse symbolic expressions by regexp. "
-  :type 'boolean
-  :group 'werkstatt)
-
-(defcustom ar-scan-whole-buffer-p nil
-  "When non-nil, scan delimiters from point-min.
-
-Otherwise assume being behind an opening delimiter or at a closing "
-  :type 'boolean
-  :group 'werkstatt)
-
-(defcustom ar-delimiters-atpt "|\"'`#\$/=?!:*+~§%&_\;@-"
-  "Specify the delimiter chars. "
-  :type 'string
-  :group 'werkstatt)
-
-(defcustom th-beg-delimiter "»‘“{<>[("
-  "Specify the delimiter char."
-  :type 'string
-  :group 'werkstatt)
-
-(defcustom th-end-delimiter "«]}<>”)’"
-  "Specify the delimiter char."
-  :type 'string
-  :group 'werkstatt)
-
-;; Email
-(put 'email 'beginning-op-at
-     (lambda ()
-       (when
-	   (looking-at "[^ \t]")
-	 (re-search-backward "[,;][[:graph:]]\\|<[[:graph:]]\\|^[[:graph:]]\\|[^[:graph:]][[:graph:]]" (line-beginning-position) t 1)
-         (when (looking-at "[[:space:];,<]")
-           (forward-char 1)))))
-
-(put 'email 'end-op-at
-     (lambda ()
-       (when (looking-at "[ <]\\{0,1\\}\\([\041-\132\136-\176]+@[\041-\132\136-\176]+\\)[;,> \t\n]*")
-	 (goto-char (match-end 1))
-	 (skip-chars-backward "[:punct:]"))(point)))
-
-;; Filename
-(if (featurep 'xemacs)
-    (defcustom thingatpt-file-name-chars "@~//A-Za-z0-9ÄÖÜäöüß_.$?={}#%,:-"
-      "Characters forseen in filenames. "
-      :type 'string
-      :group 'werkstatt)
-
-  (defcustom thingatpt-file-name-chars "@~//[:alnum:]_.$?={}#%,:-"
-    "Characters forseen in filenames. "
-    :type 'string
-    :group 'werkstatt))
-
-(put 'filename 'beginning-op-at
-     (lambda ()
-       (unless
-           (member (char-before) (list 32 ?\t 10 ?\r))
-         (skip-chars-backward thingatpt-file-name-chars))(point)))
-
-(put 'filename 'end-op-at
-     (lambda ()
-       (and (< 0 (abs (skip-chars-forward (concat "=" thingatpt-file-name-chars))))
-            (skip-chars-backward ": ")(point))))
-
-;; Filename-nondirectory
-(if (featurep 'xemacs)
-    (defcustom thingatpt-filenamenondirectory-chars "-~A-Za-z0-9ÄÖÜäöüß_.$?={}#%,: "
-      "Characters forseen in filenames. "
-      :type 'string
-      :group 'werkstatt)
-
-  (defcustom thingatpt-filenamenondirectory-chars "-~[:alnum:]_.$?={}#%,"
-    "Characters forseen in filenames. "
-    :type 'string
-    :group 'werkstatt))
-
-(put 'filenamenondirectory 'beginning-op-at
-     (lambda ()
-       (unless
-           (member (char-before) (list 32 ?\t 10 ?\r))
-         (skip-chars-backward thingatpt-filenamenondirectory-chars))(point)))
-
-(put 'filenamenondirectory 'end-op-at
-     (lambda ()
-       (and (< 0 (abs (skip-chars-forward (concat "-=" thingatpt-filenamenondirectory-chars))))
-            (skip-chars-backward ": ")(point))))
-
-;; Floats
-(put 'float 'beginning-op-at
-     (lambda ()
-       (when (numberp (read (buffer-substring-no-properties (point) (1+ (point)))))
-	 (skip-chars-backward "0-9.,"))(point)))
-
-(put 'float 'end-op-at (lambda () (skip-chars-forward "[0-9.,]")(point)))
-
-;; Function
-(put 'function 'beginning-op-at
-     (lambda ()
-       (cond
-	((eq (point) (defun-beginning-position))
-	 (point))
-	(t (beginning-of-defun)
-	   (point)))))
-
-(put 'function 'end-op-at
-     (lambda ()
-       (end-of-defun)
-       (when (string= major-mode "emacs-lisp-mode")
-	 (skip-chars-backward " \t\r\n"))(point)))
-
-;; IP
-(put 'ip 'beginning-op-at
-     (lambda ()
-       (unless (looking-at "\\s-")
-	 (skip-chars-backward "0-9."))(point)))
-
-(put 'ip 'end-op-at
-     (lambda ()
-       (when (looking-at "[0-9]\\{1,3\\}.[0-9-]\\{1,3\\}.[0-9]\\{1,3\\}.[0-9]\\{1,3\\}")
-	 (goto-char (match-end 0)))(point)))
-
-;; ISBN
-(put 'isbn 'beginning-op-at
-     (lambda ()
-       (unless (looking-at "\\s-")
-	 (skip-chars-backward "0-9-")(point))))
-
-(put 'isbn 'end-op-at
-     (lambda ()
-       (when (looking-at "[0-9]\\{1,3\\}[0-9-]\\{7,12\\}[0-9X]\\{0,1\\}")
-	 (goto-char (match-end 0)))))
-
-;; Lines
-(put 'line 'beginning-op-at (lambda () (beginning-of-line)(point)))
-
-(put 'line 'end-op-at (lambda () (end-of-line)(point)))
-
-;; List
-(put 'list 'beginning-op-at
-     (lambda ()
-       (cond ((eq 4 (car (syntax-after (point))))
-              (cons (point) (1+ (point))))
-             (t (let ((pps (parse-partial-sexp (point-min) (point))))
-                  (when (nth 1 pps)
-                    (goto-char (nth 1 pps))
-                    (cons (point) (1+ (point)))))))))
-
-(put 'list 'end-op-at
-     (lambda ()
-       (when (eq 4 (car (syntax-after (point))))
-         (forward-sexp)
-         (forward-char -1)
-         (cons (point)(1+ (point))))))
-
-;; Markup
-(defcustom markup-startstring-atpt "<[^<>]+>"
-  "Defining the beginning of a markup using ar-markup-atpt functions. "
-  :type 'string
-  :group 'werkstatt)
-
-(defcustom markup-endstring-atpt "</[^<>]+>"
-  "Defining the end of a markup using ar-markup-atpt functions. "
-  :type 'string
-  :group 'werkstatt)
-
-(put 'markup 'beginning-op-at
-     (lambda ()
-       (if (ignore-errors (looking-at markup-startstring-atpt))
-           (list (match-beginning 0) (match-end 0))
-	 (beginning-of-form-base markup-startstring-atpt markup-endstring-atpt nil 'move nil nil t))))
-
-(put 'markup 'end-op-at
-     (lambda ()
-       (let ((this-end (when (looking-at markup-startstring-atpt)
-			 (match-string-no-properties 0))))
-	 (when (stringp this-end)
-           (setq this-end (replace-regexp-in-string "<" "</" this-end))
-           (end-of-form-base markup-startstring-atpt this-end nil 'move nil nil t)))))
-
-;; Markup-no-nest
-;; (put 'markup-no-nest 'beginning-op-at
-;;      (lambda ()
-;;        (if (ignore-errors (looking-at markup-startstring-atpt))
-;;            (point)
-;;          (unless (bobp) (forward-char -1))
-;;          (while (and (not (bobp) (not (ignore-errors (looking-at markup-startstring-atpt)))))
-;;            (forward-char -1))
-;;          (when (ignore-errors (looking-at markup-startstring-atpt))
-;;            (point)))))
-;;
-;; (put 'markup-no-nest 'end-op-at
-;;      (lambda ()
-;;        (when (ignore-errors (looking-at markup-startstring-atpt))
-;;          (re-search-forward markup-endstring-atpt nil 'move 1)
-;;          (when (ignore-errors (looking-at markup-startstring-atpt))
-;;            (point)))))
-
-;; Ml-data
-(put 'mldata 'beginning-op-at
-     (lambda ()
-       (if (ignore-errors (looking-at markup-startstring-atpt))
-           (match-end 0)
-	 (beginning-of-form-base markup-startstring-atpt markup-endstring-atpt nil 'move nil nil t)
-	 (when (ignore-errors (looking-at markup-startstring-atpt))
-           (match-end 0)))))
-
-(put 'mldata 'end-op-at
-     (lambda ()
-       (when (ignore-errors (looking-at markup-startstring-atpt))
-	 (end-of-form-base markup-startstring-atpt markup-endstring-atpt nil 'move nil nil t)
-	 (re-search-backward markup-endstring-atpt nil 'move 1))))
-
-;; Ml-tag
-(put 'mltag 'beginning-op-at
-     (lambda ()
-       (if (ignore-errors
-             (or
-              (looking-at markup-startstring-atpt)
-              (looking-at markup-endstring-atpt)))
-           (list (point) (1+ (point)))
-         (unless (bobp) (forward-char -1))
-         (while
-             (and (not (bobp))
-                  (not
-                   (ignore-errors
-                     (or
-                      (looking-at markup-startstring-atpt)
-                      (looking-at markup-endstring-atpt)))))
-           (forward-char -1))
-         (when
-             (ignore-errors
-               (or
-                (looking-at markup-startstring-atpt)
-                (looking-at markup-endstring-atpt)))
-           (list (point) (1+ (point)))))))
-
-(put 'mltag 'end-op-at
-     (lambda ()
-       (when (ignore-errors (or
-                             (looking-at markup-startstring-atpt)
-                             (looking-at markup-endstring-atpt)))
-         (list (1- (match-end 0))(match-end 0)))))
-
-;; Number
-(put 'number 'beginning-op-at
-     (lambda ()
-       (let ((case-fold-search t))
-         (when (looking-at "[#xo0-9a-f]")
-           (cond ((eq (char-after) ?#)
-                  (if (looking-at "#x[0-9a-f]+")
-                      (point)
-                    (when (looking-at "#o[0-9]+")
-                      (point))))
-                 ((eq (char-after) ?x)
-                  (and (eq (char-before) ?#)
-                       (progn
-                         (forward-char -1)
-                         (looking-at "#x[0-9a-f]+"))
-                       (point)))
-                 ((eq (char-after) ?o)
-                  (and (eq (char-before) ?#)
-                       (progn
-                         (forward-char -1)
-                         (looking-at "#o[0-9]+"))
-                       (point)))
-                 ((looking-back "#x[0-9a-f]*" (line-beginning-position))
-                  (skip-chars-backward "^#" (line-beginning-position))
-                  (forward-char -1)
-                  (point))
-                 ((looking-back "#o[0-9]*" (line-beginning-position))
-                  (skip-chars-backward "^#" (line-beginning-position))
-                  (forward-char -1)
-                  (point))
-                 ((looking-back "[0-9]+" (line-beginning-position))
-                  (skip-chars-backward "0-9" (line-beginning-position))
-                  (point))
-                 ((looking-at "[0-9]+")
-                  (point)))))))
-
-(put 'number 'end-op-at
-     (lambda ()
-       (let ((case-fold-search t))
-         (when (looking-at "[#x0-9a-f]")
-           (cond ((looking-at "#x[0-9a-f]+")
-                  (forward-char 2)
-                  (skip-chars-forward "0-9a-f" (line-end-position))
-                  (point))
-                 ((looking-at "#o[0-9]+")
-                  (forward-char 2)
-                  (skip-chars-forward "0-9" (line-end-position))
-                  (point))
-                 ((looking-at "[0-9]+")
-                  (skip-chars-forward "0-9" (line-end-position))
-                  (point)))))))
-
-(put 'number 'forward-op-at
-     (lambda ()
-       (unless (eobp)
-         (let ((case-fold-search t)
-               (orig (point))
-               (erg
-                (cond ((looking-at "#[0-9a-fA-F]+|x[0-9]+")
-                       (forward-char 2)
-                       (skip-chars-forward "0-9a-f" (line-end-position))
-                       (and (< 0 (skip-chars-forward "^0-9"))(point)))
-                      ((looking-at "#o[0-9]+")
-                       (forward-char 2)
-                       (skip-chars-forward "0-9" (line-end-position))
-                       (and (< 0 (skip-chars-forward "^0-9"))(point)))
-                      ((looking-at "[0-9]+")
-                       (skip-chars-forward "0-9" (line-end-position))
-                       (and (< 0 (skip-chars-forward "^0-9"))(point)))
-                      (t
-                       (re-search-forward "#x[a-fA-F0-9]+\\|#o[0-8]+\\|[0-9]+" nil t 1)
-                       (when (ignore-errors (match-beginning 0))
-                         (goto-char (match-beginning 0)))))))
-           (cond ((looking-at "#[xX][a-fA-F0-9]+")
-                  (setq erg (point)))
-                 ((looking-at "#o[0-9]+")
-                  (setq erg (point)))
-                 ((looking-at "[0-9]+")
-                  (setq erg (point)))
-                 ((eobp)
-                  (setq erg nil)))
-           erg))))
-
-(put 'number 'backward-op-at
-     (lambda ()
-       (unless (bobp)
-         (let ((case-fold-search t)
-               erg)
-           (cond ((and (looking-back "#?x?[0-9a-f]+" (line-beginning-position))
-                       (goto-char (match-beginning 0))
-                       (ar-number-atpt)))
-                 (t
-                  (while
-                      (or
-                       (and
-			(re-search-backward "#?[xo]?[a-f0-9]+" nil t 1)
-			(goto-char (match-beginning 0))
-			(not (setq erg (ar-number-atpt))))))))
-           erg))))
-
-;; Name
-(defcustom ar-name-chars-atpt "a-zA-Z_;-"
-  "Name is just a identifier for general use, described by chars composing it. "
-  :type 'regexp
-  :group 'werkstatt)
-
-(put 'name 'beginning-op-at
-     (lambda ()
-       (skip-chars-backward ar-name-chars-atpt)
-       (point)))
-
-(put 'name 'end-op-at
-     (lambda ()
-       (when (looking-at (concat "[" ar-name-chars-atpt "]"))
-	 (skip-chars-forward ar-name-chars-atpt)
-	 ;; name may contain char `:' but not at the end, as
-	 ;; messages tend to insert it there
-	 (skip-chars-forward ar-name-chars-atpt)
-	 (skip-chars-backward ":")
-	 (point))))
-
-;; Page
-(put 'page 'beginning-op-at
-     (lambda ()
-       (backward-page)(point)))
-
-(put 'page 'end-op-at
-     (lambda ()
-       (forward-page)(point)))
-
-;; Paragraph
-(defvar ar-this-paragraph-orig nil)
-
-(defun ar-beginning-of-paragraph-intern ()
-  (backward-paragraph)
-  (skip-chars-forward " \t\r\n\f")
-  (point))
-
-(defun ar-end-of-paragraph-intern ()
-  (forward-paragraph)
-  (skip-chars-backward " \t\r\n\f")
-  (point))
-
-(put 'paragraph 'beginning-op-at
-     (lambda ()
-       (setq ar-this-paragraph-orig (point))
-       (back-to-indentation)
-       (when (and (eq (point) ar-this-paragraph-orig))
-         (skip-chars-backward " \t\r\n\f"))
-       (ar-beginning-of-paragraph-intern)))
-
-(put 'paragraph 'end-op-at
-     (lambda ()
-       (ar-end-of-paragraph-intern)
-       (if (eq (point) ar-this-paragraph-orig)
-           (progn
-             (skip-chars-forward " \t\r\n\f")
-             (ar-end-of-paragraph-intern))
-         (point))))
-
-;; Paren
-(put 'paren 'beginning-op-at
-     (lambda ()
-       (cond
-        ((looking-at "\\s)")
-         (forward-char 1) (backward-list 1))
-        (t (while
-               (and (< 0 (abs (skip-chars-backward "^(")))
-                    (nth 8 (parse-partial-sexp (point-min) (point)))))
-           (when (eq (char-before) ?\()
-             (forward-char -1)
-             (cons (point) (1+ (point))))))))
-
-(put 'paren 'end-op-at
-     (lambda ()
-       (forward-list 1)
-       (when (eq (char-before) ?\))
-         (cons (1- (point)) (point)))))
-
-;; Phone
-(put 'phone 'beginning-op-at
-     (lambda ()
-       (when
-           (and (looking-at "[0-9 \t.()-]")
-		(not (eq (char-before) ?+)))
-	 (re-search-backward "[^0-9 \t.()-][0-9 ()\t-]+" (line-beginning-position) nil 1) (forward-char 1)(point))))
-
-(put 'phone 'end-op-at
-     (lambda ()
-       (when
-           (looking-at "[0-9;, \t()-]")
-         (re-search-forward "[0-9 \t.()-]+[^0-9 \t-]" (1+ (line-end-position)) nil 1) (forward-char -1))(point)))
-
-;; Region
-(defvar ar-region-end-atpt nil)
-(put 'region 'beginning-op-at
-     (lambda ()
-       (setq ar-region-end-atpt (region-end))
-       (goto-char (region-beginning))))
-
-(put 'region 'end-op-at
-     (lambda ()
-       (goto-char ar-region-end-atpt)))
-
-;; Sentence
-(defvar ar-sentence-end-chars "[.!?]")
-
-(defcustom ar-sentence-end-op-re "[.!?] *$\\|[[:alpha:]][^ \t\r\n\f0-9][.!?] *[^a-z]"
-  ""
-  :type 'regexp
-  :group 'convenience)
-
-(put 'sentence 'beginning-op-at
-     (lambda ()
-       (if (save-excursion
-             (and (looking-at "[A-Z]")
-                  (progn
-                    (skip-chars-backward " \t\r\n\f")
-                    (or (bobp) (member (char-before) (list 63 ?! ?.))))))
-           (point)
-         (let ((limit (save-excursion (backward-paragraph)(point))))
-           (while
-               (and (not (bobp))
-                    (or
-                     (prog1
-                         (re-search-backward "[.!?] *$\\|[.!?] *[^a-z]" limit t 1)
-                       (forward-char 1)
-                       (skip-chars-forward " \t\r\n\f"))
-                     (prog1
-                         (backward-paragraph)
-                       (skip-chars-forward " \t\r\n\f")))
-                    (nth 8 (parse-partial-sexp (point-min) (point))))))
-         (point))))
-
-(put 'sentence 'end-op-at
-     (lambda ()
-       (let ((orig (point)))
-         (re-search-forward ar-sentence-end-op-re nil t 1)
-         (skip-chars-backward "A-Z")
-         (skip-chars-backward " \t\r\n\f")
-         (when (< orig (point)) (point)))))
-
-(put 'sentence 'forward-op-at
-     (lambda ()
-       (unless (eobp) (forward-char 1))
-       (let ((orig (point)))
-         (re-search-forward ar-sentence-end-op-re nil t 1)
-         (skip-chars-backward "(A-Z")
-         (skip-chars-backward " \t\r\n\f")
-         (when (< orig (point)) (point)))))
-
-(put 'sentence 'backward-op-at
-     (lambda ()
-       (backward-sentence)))
-
-;; Sexp
-(put 'sexp 'beginning-op-at
-     (lambda ()
-       (unless (member (char-before) (list 32 ?\t 10 ?\r)) (ignore-errors (backward-sexp)))(point)))
-
-(put 'sexp 'end-op-at
-     (lambda ()
-       (forward-sexp)(point)))
-
-;; Sh-struct
-(eval-after-load 'sh-werk
-  (put 'shstruct 'beginning-op-at
-       'sh-beginning-of-form))
-
-(eval-after-load 'sh-werk
-  (put 'shstruct 'end-op-at
-       (lambda ()
-	 (when (looking-at ar-beginning-shstruct-atpt)
-	   (sh-end-of-form)
-	   (forward-char 1) (point)))))
-
-(eval-after-load 'sh-werk
-  (put 'shstruct 'forward-op-at
-       (lambda ()
-	 (re-search-forward ar-beginning-shstruct-atpt nil 'move 1))))
-
-(eval-after-load 'sh-werk
-  (put 'shstruct 'backward-op-at
-       (lambda ()
-	 (re-search-backward ar-end-shstruct-atpt nil 'move 1))))
-
-;; Symbol
-(put 'symbol 'beginning-op-at
-     (unless (looking-at "\\s-")
-       (lambda ()
-         (let (erg)
-           (while
-               (or (when
-                       (ar-escaped (if (bobp) (point)(1- (point))))
-                     (forward-line -1)
-                     (setq erg (point)))
-                   (and (< 0 (abs (skip-syntax-backward "w_.'\\")))(setq erg (point)))))
-           (unless erg (when (looking-at "[^ ]")(setq erg (point))))
-           erg))))
-
-(put 'symbol 'end-op-at
-     (lambda ()
-       (let (erg)
-         (while
-             (or (when
-                     (ar-escaped)
-                   (forward-char 1)
-                   (setq erg (point)))
-                 (and (< 0 (skip-syntax-forward "w_.'\\"))(setq erg (point)))))
-         erg)))
-
-
-(put 'symbol 'forward-op-at
-     (lambda ()
-       (skip-syntax-forward "^_")
-       (and (< 0 (abs (skip-syntax-forward "_")))
-            (point))))
-
-(put 'symbol 'backward-op-at
-     (lambda ()
-       (skip-syntax-backward "^_")
-       (and (< 0 (abs (skip-syntax-backward "_")))
-            (point))))
-
-;; Triplequoted
-(put 'triplequoted 'beginning-op-at
-     (lambda ()
-       (let* ((triplequoted "\"\"\"\\|'''")
-              (bounds (ar-in-delimiter-base triplequoted)))
-         (when (car-safe bounds)
-           (goto-char (car-safe bounds))
-           bounds))))
-
-(put 'triplequoted 'end-op-at
-     (lambda ()
-       (let* ((triplequoted "\"\"\"\\|'''")
-              (erg (looking-at triplequoted)))
-         (when erg
-           (setq triplequoted (match-string-no-properties 0))
-           (goto-char (match-end 0))
-           (setq erg (end-of-form-base triplequoted triplequoted nil 'move 0 nil nil 'ar-escaped)))
-         erg)))
-
-(put 'triplequoted 'forward-op-at
-     (lambda ()
-       (let ((triplequoted "\"\"\"\\|'''")
-             bounds)
-	 (while (and (search-forward triplequoted nil 'move 1)
-                     (not (ar-in-delimiter-base triplequoted))))
-	 (unless (eobp)
-           (setq bounds (end-of-form-base triplequoted triplequoted nil 'move 0 nil nil 'ar-escaped))
-           (ignore-errors (goto-char (1- (cadr bounds)))))
-	 bounds)))
-
-(put 'triplequoted 'backward-op-at
-     (lambda ()
-       (let ((triplequoted "\"\"\"\\|'''")
-             erg)
-	 (while (and (search-backward triplequoted nil 'move 1)
-                     (not (setq erg (ar-in-delimiter-base triplequoted)))))
-	 (when erg (goto-char erg))
-	 erg)))
-
-;; Triplequoted-Dq
-(put 'triplequoteddq 'beginning-op-at
-     (lambda ()
-       (let* ((triplequoteddq "\"\"\"")
-              (bounds (ar-in-delimiter-base triplequoteddq)))
-         (when (car-safe bounds)
-           (goto-char (car-safe bounds))
-           bounds))))
-
-(put 'triplequoteddq 'end-op-at
-     (lambda ()
-       (let* ((triplequoteddq "\"\"\"")
-              (erg (looking-at triplequoteddq)))
-         (when erg
-           (goto-char (match-end 0))
-           (while (and (search-forward triplequoteddq nil 'move 1)
-                       (ar-in-delimiter-base triplequoteddq)))
-           (when (looking-back triplequoteddq (line-beginning-position))
-             (list (match-beginning 0) (match-end 0))
-             )))))
-
-(put 'triplequoteddq 'forward-op-at
-     (lambda ()
-       (let ((triplequoteddq "\"\"\""))
-         (while (and (search-forward triplequoteddq nil 'move 1)
-                     (not (ar-in-delimiter-base triplequoteddq))))
-         )))
-
-(put 'triplequoteddq 'backward-op-at
-     (lambda ()
-       (let ((triplequoteddq "\"\"\""))
-         (while (and (search-backward triplequoteddq nil 'move 1)
-                     (not (ar-in-delimiter-base triplequoteddq)))))))
-
-;; Triplequoted-Sq
-(put 'triplequotedsq 'beginning-op-at
-     (lambda ()
-       (let* ((triplequotedsq "'''")
-              (bounds (ar-in-delimiter-base triplequotedsq)))
-         (when (car-safe bounds)
-           (goto-char (car-safe bounds))
-           bounds))))
-
-(put 'triplequotedsq 'end-op-at
-     (lambda ()
-       (let* ((triplequotedsq "'''")
-              (erg (looking-at triplequotedsq)))
-         (when erg
-           (goto-char (match-end 0))
-           (while (and (search-forward triplequotedsq nil 'move 1)
-                       (ar-in-delimiter-base triplequotedsq)))
-           (when (looking-back triplequotedsq (line-beginning-position))
-             (list (match-beginning 0) (match-end 0)))))))
-
-(put 'triplequotedsq 'forward-op-at
-     (lambda ()
-       (let ((triplequotedsq "'''"))
-         (while (and (search-forward triplequotedsq nil 'move 1)
-                     (not (ar-in-delimiter-base triplequotedsq)))))))
-
-(put 'triplequotedsq 'backward-op-at
-     (lambda ()
-       (let ((triplequotedsq "'''"))
-         (while (and (search-backward triplequotedsq nil 'move 1)
-                     (not (ar-in-delimiter-base triplequotedsq)))))))
-
-;; Url
-;; use thingatpt.el's form here too
-(put 'url 'end-op-at (get 'url 'end-op))
-(put 'url 'beginning-op-at (get 'url 'beginning-op))
-
-(defcustom url-at-point-chars ":/?#[]@!$&()*+,;=[:alnum:]-._~"
-  "Chars which might compose a URL. "
-  :type 'string
-  :group 'werkstatt)
-
-;; Whitespace
-(put 'whitespace 'beginning-op-at
-     (lambda () (when (looking-at "[ \t]") (skip-chars-backward "[ \t\r\n[:blank:]]")(point))))
-
-(put 'whitespace 'end-op-at (lambda () (skip-chars-forward " \t\r\n[:blank:]")(point)))
-
-;; Word
-(put 'word 'beginning-op-at
-     (lambda () (when (looking-at "\\w")
-		  (unless (or (looking-back "\\W" (line-beginning-position))(bolp))
-		    (forward-word -1))
-		  (point))))
-
-(put 'word 'end-op-at
-     (lambda () (when (and (or (bolp)(looking-back "\\W" (line-end-position)))(looking-at "\\w"))
-		  (forward-word 1)(point))))
-
-;; Word-alpha-only
-(put 'wordalphaonly 'beginning-op-at
-     (lambda () (when (looking-at "[[:alpha:]]")
-		  (unless (looking-back "[^[:alpha:]]" (line-beginning-position))
-		    (skip-chars-backward "[:alpha:]")
-		    (point)))))
-
-(put 'wordalphaonly 'end-op-at
-     (lambda () (when (and (looking-back "[^[:alpha:]]" (line-beginning-position))(looking-at "[[:alpha:]]" (line-beginning-position)))
-		  (skip-chars-forward "[:alpha:]")
-		  (point))))
-
-(defun gen--in-string-p-intern (pps)
-  (goto-char (nth 8 pps))
-  (list (point) (char-after)(skip-chars-forward (char-to-string (char-after)))))
-
-(defun gen-in-string-p ()
-  "if inside a double- triple- or singlequoted string,
-
-If non-nil, return a list composed of
-- beginning position
-- the character used as string-delimiter (in decimal)
-- and length of delimiter, commonly 1 or 3 "
-  (interactive "p")
-  (save-excursion
-    (let* ((pps (parse-partial-sexp (point-min) (point)))
-           (erg (when (nth 3 pps)
-                  (gen-in-string-p-intern pps))))
-      (unless erg
-        (when (looking-at "\"\\|'")
-          (forward-char 1)
-          (setq pps (parse-partial-sexp (line-beginning-position) (point)))
-          (when (nth 3 pps)
-            (setq erg (gen-in-string-p-intern pps)))))
-
-      ;; (list (nth 8 pps) (char-before) (1+ (skip-chars-forward (char-to-string (char-before)))))
-      erg)))
-
-;;
-(defcustom copy-or-alternative "word"
-  "Copy-or commands may act on thing specified here.
-
-For example when `ar-doublequote-or-copy-atpt' is called with positive
-argument but without active region and also thing-at-point
- --i.e. doublequoted here-- doesn't exist,
-it would doublequote a word at point "
-  :type 'string
-  :group 'werkstatt)
-
-(defcustom ar-install-directory "~/werkstatt"
-  "Directory where thingatpt-utils are installed"
-  :type 'string
-  :group 'werkstatt)
-
-;; (update-directory-autoloads (expand-file-name ar-install-directory))
-
-(defun ar-trim-symbol-atpt ()
-  (interactive "*")
-  (let ((erg (ar-bounds-of-symbol-atpt)))
-    (goto-char (cdr erg))
-    (delete-char -1)
-    (goto-char (car erg))
-    (delete-char 1)))
-
-(defun ar-trim-region-atpt ()
-  (interactive "*")
-  (let ((erg (ar-bounds-of-region-atpt)))
-    (goto-char (cdr erg))
-    (delete-char -1)
-    (goto-char (car erg))
-    (delete-char 1)))
-
-(defun ar--transform-generic-delimited-atpt (replacement)
-  (interactive "*")
-  (let* ((bounds (ar-bounds-of-delimited-atpt))
-         (startcharnew (if (consp replacement)
-                           (car replacement)
-                         replacement))
-         (endcharnew (if (consp replacement)
-                         (cdr replacement)
-                       replacement))
-         (beg (or (and (numberp (car bounds))(car bounds))
-                  (and (numberp (caar bounds))(caar bounds))))
-         (end (or
-               (ignore-errors (and (numberp (cdr bounds)) (cdr bounds)))
-               (ignore-errors (and (numberp (cadr (cadr bounds)))(cadr (cadr bounds))))
-               (ignore-errors (and (numberp (cadr bounds))(cadr bounds)))
-               (ignore-errors (and (numberp (cdr (cadr bounds)))(cdr (cadr bounds))))
-	       )))
-    (if (ignore-errors (numberp beg))
-        (save-excursion
-          (goto-char beg)
-          (delete-char 1)
-          (insert startcharnew)
-          (if (numberp end)
-              (progn
-                (goto-char end)
-                (delete-char -1)
-                (insert endcharnew))
-            (error "ar--transform-generic-delimited-atpt: Don't see end")))
-      (error "ar--transform-generic-delimited-atpt: Don't see start"))))
-
 
 ;; ML data-forms start
 
@@ -2734,6 +1353,34 @@ it would doublequote a word at point "
          (end-of-form-base "////////(" "////////)" nil 'move 1 nil nil 'ar-escaped))))
 
 
+;; Triplequoteddq
+(put 'triplequoteddq 'beginning-op-at
+     (lambda ()
+       (if (ignore-errors (looking-at "\"\"\"\\|'''"))
+           (list (match-beginning 0) (match-end 0))
+         (beginning-of-form-base "\"\"\"\\|'''" "\"\"\"\\|'''" nil 'move 1 nil nil 'ar-escaped))))
+
+(put 'triplequoteddq 'end-op-at
+     (lambda ()
+       (when (ignore-errors (looking-at "\"\"\"\\|'''"))
+         (goto-char (match-end 0)) 
+         (end-of-form-base "\"\"\"\\|'''" "\"\"\"\\|'''" nil 'move 1 nil nil 'ar-escaped))))
+
+
+;; Triplequotedsq
+(put 'triplequotedsq 'beginning-op-at
+     (lambda ()
+       (if (ignore-errors (looking-at "\"\"\"\\|'''"))
+           (list (match-beginning 0) (match-end 0))
+         (beginning-of-form-base "\"\"\"\\|'''" "\"\"\"\\|'''" nil 'move 1 nil nil 'ar-escaped))))
+
+(put 'triplequotedsq 'end-op-at
+     (lambda ()
+       (when (ignore-errors (looking-at "\"\"\"\\|'''"))
+         (goto-char (match-end 0)) 
+         (end-of-form-base "\"\"\"\\|'''" "\"\"\"\\|'''" nil 'move 1 nil nil 'ar-escaped))))
+
+
 ;; Xslstylesheetp
 (put 'xslstylesheetp 'beginning-op-at
      (lambda ()
@@ -2749,943 +1396,195 @@ it would doublequote a word at point "
 
 
 ;; ML data-forms end
-
-;; ar-insert-thingatpt-th-funktionen start
-
-(defun ar-toggle-thing-copy-region ()
-  (interactive) 
-  (setq thing-copy-region (not thing-copy-region)))
-
-(defun ar-th (thing &optional no-delimiters iact check)
-  "Returns a buffer substring according to THING.
-  THING may be a well known form as `symbol',
-  `list', `sexp', `defun' or a newly defined THING.
-  When mark-thingatpt is `t' - the default - a found THING
-  is set as current region, enabling further action on them
-
-  If NO-DELIMITERS set by user functions, THING returned is
-  stripped by delimiters resp. markup
-
-  Optional CHECK will count for nesting, otherwise being behind an opening or at a closing delimiter is assumed
-
- "
-  (condition-case nil
-      (let* ((no-delimiters (or no-delimiters (eq 4 (prefix-numeric-value no-delimiters))))
-	     (check (or check ar-scan-whole-buffer-p))
-	     (bounds (ar-th-bounds thing no-delimiters check))
-	     (beg (if no-delimiters
-		      (cond ((ignore-errors (numberp (car-safe bounds)))
-			     (car-safe bounds))
-			    ((ignore-errors (caar bounds))
-			     (caar bounds))
-			    (t (car-safe bounds)))
-		    (cond ((ignore-errors (caar bounds))
-			   (caar bounds))
-			  (t (car-safe bounds)))))
-	     (end (if no-delimiters (car-safe (cdr-safe bounds)) (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))(cdr bounds))))
-	     erg)
-	(when (and beg end)
-	  (setq erg
-		(buffer-substring-no-properties beg end))
-	  (when thing-copy-region
-	    (ar-th-mark thing nil beg end no-delimiters check))
-	  (when thing-copy-region (kill-new erg))
-	  erg))
-    (error nil)))
-
-(defun ar--th-bounds-char-return (beg end &optional check orig no-delimiters)
-  (when (and beg end
-	     (not (eq beg end))
-	     (or (eobp)
-		 (or check
-		     (<= orig end))))
-    (if no-delimiters
-	(cons (1+ beg) (1- beg))
-      (cons beg end))))
-
-(defun ar--th-bounds-list-return (beg end &optional iact check orig no-delimiters)
-  ;; (message "%s" no-delimiters)
-  (let (erg)
-    (when
-	(and beg end
-	     (not (eq beg end))
-	     (or (eobp)
-		 (or check
-		     (<= orig (or
-			       (ignore-errors (cadr end))
-			       (ignore-errors (cdr end)))))))
-      (if no-delimiters
-	  (progn
-	    (push (car end) erg)
-	    (push (cdr beg) erg))
-	(push end erg)
-	(push beg erg))
-      erg)))
-
-
-(defvar ar-th-bounds-backfix nil
-  "starting delimiter pos might need correction from end")
-
-(defun ar-th-bounds (thing &optional no-delimiters iact check)
-  "Determine the start and end buffer locations for the THING at point.
-  THING is a symbol which specifies the kind entity you want.
-
-  A boolean value NO-DELIMITERS says if THING boundaries should extend to markups, delimiters or not.
-  Call THING by his name, i.e. ar-word-atpt etc. IACT is t, if function has been called interactively
-
-With CHECK count nesting
-
-With NO-DELIMITERS
-Returns two lists composed of positions of delimiters
-
-NO-CHECK assumes being at or behind a closing delimiter, doesn't check for nesting.
-
-"
-  (setq ar-th-bounds-backfix nil)
-  (ignore-errors
-    (cond ((eq thing 'region)
-	   (ignore-errors (cons (region-beginning) (region-end))))
-	  ((eq thing 'char)
-	   (cons (point) (1+ (point))))
-	  (t (save-excursion
-	       (save-restriction
-		 (let ((regstart (when (use-region-p) (region-beginning)))
-		       (regend (when (use-region-p) (region-end))))
-		   ;; (when (use-region-p)
-		   ;;   (narrow-to-region regstart regend))
-		   (let* ((orig (point))
-			  ;; (scan-whole-buffer check)
-			  (beg (funcall (get thing 'beginning-op-at)))
-			  (end (and beg (funcall (get thing 'end-op-at)))))
-		     (when ar-th-bounds-backfix
-		       (message "backfix: %s" ar-th-bounds-backfix)
-		       (setq beg ar-th-bounds-backfix))
-		     (if (numberp beg)
-			 (ar--th-bounds-char-return beg end check orig no-delimiters)
-		       (ar--th-bounds-list-return beg end iact check orig no-delimiters))))))))))
-
-
-(defun ar-th-beg (thing &optional arg iact check)
-  "Return beginning position of THING. "
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing arg iact check))
-	     (beg (or (ignore-errors (caar bounds)) (car-safe bounds))))
-	(when iact
-	  ;; (message "   %s " beg)
-          (kill-new (format "%s" beg)))
-	beg)
-    (error nil)))
-
-(defun ar-th-end (thing &optional arg iact check)
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing arg check))
-	     (end (or (ignore-errors (car (cdr (cadr bounds))))(ignore-errors (cdr (cadr bounds)))(ignore-errors (cadr bounds)))))
-	end)
-    (error nil)))
-
-(defun ar-th-gotobeg (thing &optional arg iact check)
-  "Goto char beginning, core function "
-  (condition-case nil
-      (funcall (get thing 'beginning-op-at))
-    ;; (let* ((bounds (ar-th-bounds thing arg iact check))
-    ;; 	     (beg (caar bounds)))
-    ;; 	(when iact
-    ;; 	  (message "   %s " beg))
-    ;; 	(goto-char beg))
-    (error nil)))
-
-(defun ar-th-gotoend (thing &optional arg iact check)
-  "Goto char end, core function "
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing))
-	     (end (or (ignore-errors (car (cdr (cadr bounds))))(ignore-errors (cdr (cadr bounds)))(ignore-errors (cadr bounds)))))
-	(goto-char end)
-	(forward-char -1)
-	(cons (point) (1+ (point))))
-    (error (concat (format "%s: " thing) "ar-th-gotoend failed"))))
-
-(defun ar-th-length (thing &optional arg iact check)
-  (ignore-errors
-    (let* ((bounds (ar-th-bounds thing arg check))
-	   (beg (caar bounds))
-	   (end (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))))
-	   (length (- end beg)))
-      (when iact
-        (message "   %s " (format "%s" length)))
-      length)))
-
-(defun ar-th-ratio-base (cla elt &optional beg end ratio iact)
-  (let ((beg
-         (cond (beg beg)
-               ((use-region-p)
-                (region-beginning))
-               (t
-                (funcall (intern-soft (concat "ar-" (format "%s" elt) "-beginning-position-atpt"))))))
-	(end
-         (cond (end (copy-marker end))
-               ((use-region-p)
-                (copy-marker (region-end)))
-               (t
-                (condition-case nil (copy-marker (funcall (intern-soft (concat "ar-" (format "%s" elt) "-end-position-atpt")))) (error nil))))))
-    (ar-th-ratio elt cla beg end ratio iact)))
-
-(defun ar-th-ratio (thing cla &optional beg end ratio iact no-delimiters check)
-  (save-excursion
-    (ignore-errors
-      (let* (bounds
-             (beg (or beg (and (setq bounds (ar-th-bounds thing no-delimiters iact check)) (caar bounds))))
-             (end (or end (cadr (cadr bounds))))
-             (matchcount 0)
-             (erg 0)
-             len)
-        (goto-char beg)
-        (setq erg
-              (cond ((member cla ar-atpt-classes)
-                     (if (featurep 'xemacs)
-                         (string-to-number (string-strip (count-matches (eval cla)) nil "a-z "))
-                       (count-matches (concat "[[:" (format "%s" cla) ":]]") (or beg (point-min)) (or end (point-max)))))
-                    (t (if (functionp (intern-soft (concat "ar-forward-" (format "%s" cla) "-atpt")))
-                           (progn
-                             (while (and (< (point) end)
-                                         (funcall (intern-soft (concat "ar-forward-" (format "%s" cla) "-atpt"))))
-                               (setq matchcount (1+ matchcount)))
-                             matchcount)
-                         (while (and (< (point) end)
-                                     (search-forward cla end t 1))
-                           (setq matchcount (1+ matchcount)))
-                         matchcount))))
-        (when ratio
-          (progn
-            (setq len (string-to-number (format "%f" (- end beg))))
-            (setq erg (/ matchcount len))
-            erg))
-        erg))))
-
-(defun ar-th-copy (thing &optional arg iact)
-  (condition-case nil
-      (let ((newcopy (ar-th thing)))
-	(when newcopy
-          (progn
-            (unless (string= newcopy (car kill-ring)) (kill-new newcopy))
-            (when iact
-              (message "   %s" newcopy))
-            newcopy)))
-    (error nil)))
-
-(defun ar-th-trim (thing &optional no-delimiters iact check left right)
-  "Trims given THING at point.
-If boundaries of thing are know, use `ar-th-trim-base' directly. "
-  (let* ((bounds (ar-th-bounds thing no-delimiters iact check))
-         (beg (or (ignore-errors (caar bounds)) (car-safe bounds)))
-         (end (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))(ignore-errors (cdr bounds)))))
-    (ar-th-trim-base beg end left right)))
-
-(defun ar-th-trim-base (beg end left right)
-  "Trim buffer-substring resp. to args starting-point, end-point, left-trim, right-trim. "
-  (save-excursion 
-    (let ((beg (copy-marker beg))
-	  (end (copy-marker end))
-	  (old-end end))
-      (cond ((and left right)
-	     (goto-char end)
-	     (delete-char -1)
-	     (goto-char beg)
-	     (delete-char 1)
-	     (eq (marker-position end) (- old-end 2)))
-	    (right
-	     (goto-char end)
-	     (delete-char -1)
-	     (eq (marker-position end) (- old-end 1)))
-	    (left
-	     (goto-char beg)
-	     (delete-char 1)
-	     (eq (marker-position end) (- old-end 1)))
-	    (t (goto-char end)
-	       (delete-char -1)
-	       (goto-char beg)
-	       (delete-char 1)
-	       (eq (marker-position end) (- old-end 2)))))))
-
-(defun ar-th-trim-left (thing &optional no-delimiters iact check)
-  (ar-th-trim thing no-delimiters iact check t))
-
-(defun ar-th-trim-right (thing &optional no-delimiters iact check)
-  (ar-th-trim thing no-delimiters iact check nil t))
-
-(defun ar-th-peel (thing &optional no-delimiters iact check)
-  "Remove the outer element of an hierarchical form.
-
-\(foo (bar baz)) --> (bar baz)
---^-----------
-
-\[foo [bar baz]] --> [bar baz]
---^-----------
-
-Inspired by stuff like `paredit-splice-sexp-killing-backward'; however, instead of working `-backward' or `-forward' deletes expression at point.
-
-"
-  (let* ((outer (ar-th-bounds thing no-delimiters iact check))
-	 (outer-start (caar outer))
-	 (outer-end (copy-marker (or (ignore-errors (cadr (cadr outer)))(cdr (cadr outer))(car (cadr outer)))))
-	 inner-start inner-end)
-    (when (eq (point) outer-start)(forward-char 1))
-    (skip-syntax-forward "^(")
-    (setq inner-start (point-marker))
-    (forward-sexp)
-    (delete-region (point) outer-end)
-    (backward-sexp)
-    (delete-region (point) outer-start)))
-
-(defun ar-th-comment (thing &optional no-delimiters iact check)
-  "Comment or uncomment THING "
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing no-delimiters iact check))
-	     (beg (caar bounds))
-	     (end (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds))))))
-	(when (and beg end)
-	  (goto-char beg)
-	  (comment-region beg end)))
-    (error nil)))
-
-(defun ar-th-mark (thing &optional bounds beg end no-delimiters iact check)
-  " "
-  (condition-case nil
-      (let* ((bounds (unless (and beg end) (or bounds (ar-th-bounds thing no-delimiters iact check))))
-	     (beg (or beg (ignore-errors (caar bounds))))
-	     (end (or end (or (ignore-errors (cadr (cadr bounds))) (ignore-errors (cdr (cadr bounds)))))))
-	(when (and beg end)
-	  (goto-char beg)
-	  (push-mark (point) t t)
-	  (goto-char end)
-	  (exchange-point-and-mark)))
-    (error nil)))
-
-;; uses sgml-tag from sgml-mode.el
-(defun ar-th-hide (thing &optional beg end no-delimiters iact check)
-  "Hide visibility of existing things at point. "
-  (let ((modified (buffer-modified-p))
-        (inhibit-read-only t) bounds)
-    (unless (and beg end)
-      (setq bounds (ar-th-bounds thing no-delimiters iact check))
-      (setq beg (or (ignore-errors (caar bounds))(car-safe bounds)))
-      (setq end (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))(ignore-errors (cdr bounds)))))
-    (if (and beg end)
-        (progn
-          (hs-make-overlay beg end 'code)
-          (set-buffer-modified-p modified))
-      (error (concat "No " (format "%s" thing) " at point!")))))
-
-;;;###autoload
-(defun ar-th-show (thing &optional beg end no-delimiters iact check)
-  "Remove invisibility of existing things at point. "
-  (let ((modified (buffer-modified-p))
-        (inhibit-read-only t) bounds)
-    (unless (and beg end)
-      (setq bounds (ar-th-bounds thing no-delimiters iact check))
-      (setq beg (or (ignore-errors (caar bounds))(point-min)))
-      (setq end (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))(ignore-errors (cdr end))(point-max))))
-    (if (and beg end)
-        (progn
-          (hs-discard-overlays beg end)
-          (set-buffer-modified-p modified))
-      (error (concat "No " (format "%s" thing) " at point!")))))
-
-(defun ar-th-hide-show (&optional thing beg end no-delimiters iact check)
-  "Toggle visibility of existing things at point. "
-  (interactive "p")
-  (let ((modified (buffer-modified-p))
-        (inhibit-read-only t)
-        bounds beg end)
-    (setq beg (or beg (and (use-region-p) (region-beginning))))
-    (setq end (or end (and (use-region-p) (region-end))))
-    (unless (and beg end)
-      (setq bounds (ar-th-bounds thing no-delimiters iact check))
-      (setq beg (caar bounds))
-      (setq end (cadr (cadr bounds))))
-    (if (overlays-in beg end)
-        (hs-discard-overlays beg end)
-      (hs-make-overlay beg end 'code))
-    (set-buffer-modified-p modified)))
-
-(defun ar-th-separate (thing &optional arg iact check)
-  "Optional CHECK is ignored "
-  (let* ((bounds (ar-th-bounds thing arg iact check))
-	 (beg (caar bounds))
-	 (end (copy-marker (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))))))
-    (when beg (goto-char beg)
-	  (when (not (looking-back "^[ \t\f\r]*" (line-beginning-position)))
-	    (newline ar-newlines-separate-before))
-	  (indent-according-to-mode)
-	  (goto-char end)
-	  (when (not (looking-at "[ \t\f\r]*$"))
-	    (newline 1)
-	    (indent-according-to-mode)))))
-
-(defun ar-in-delimited-p (char)
-  "Return if CHAR is delimiting at point.
-
-Return position if at opening delimiter"
-  (let ((orig (point))
-        (char (char-to-string char))
-	(counter 0)
-	erg)
-    (save-excursion
-      (goto-char (point-min))
-      (while (and (search-forward char orig t)
-		  (not (ar-escaped)))
-	(setq counter (1+ counter))))
-    (setq erg (eq 1 (% counter 2)))
-    (or erg (and (eq (char-after) char)(point)))))
-
-(defun ar-thing-in-thing (thing-1th thing-2th th-function &optional iact beg-2th end-2th)
-  "Addresses things of 1th kind within the borders of the 2th,
-If optional positions BEG-2TH END-2TH are given, works on them instead. "
-  (let* ((bounds (ar-th-bounds thing-2th))
-	 ;; take the inner pos of a delimiter
-	 (beg (or
-	       (ignore-errors (car (cdr (car-safe bounds))))
-	       (ignore-errors (caar bounds))
-               (car-safe bounds)))
-	 ;; take the inner pos of a delimiter
-	 (end (copy-marker (or (ignore-errors (car (car (cdr bounds))))(ignore-errors (car (cdr (cadr bounds))))(ignore-errors (cdr (cadr bounds)))(cdr-safe bounds))))
-	 (orig (copy-marker beg))
-         ;; ar-scan-whole-buffer
-	 (last 1)
-	 inner-end done)
-    (save-excursion
-      (save-restriction
-        (narrow-to-region beg end)
-        (goto-char beg)
-        (if (eq th-function 'ar-th-sort)
-            (ar-th-sort thing-1th nil beg end nil nil nil)
-	  (when (numberp inner-end) (goto-char inner-end))
-	  (while
-	      (and
-	       (prog1 (or (not done) (< last (point)))
-		 (setq last (point))
-		 (funcall th-function thing-1th nil iact ar-scan-whole-buffer))
-	       (setq done t)
-	       (not (eobp)))
-	    (unless (eq 'char thing-1th) (setq inner-end (ar-th-forward thing-1th 1 iact t)))))))))
-
-(defun ar-th-kill (thing &optional no-delimiters iact check)
-  " "
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing no-delimiters iact check))
-	     (beg (or (ignore-errors (caar bounds)) (ignore-errors (car bounds))))
-	     (end (and beg (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))(ignore-errors (cadr bounds))(ignore-errors (cadr (cadr bounds)))))))
-	(and beg end
-	     (if (eq thing 'comment)
-		 (kill-region beg (1+ end))
-	       (progn
-		 (kill-region beg end)
-		 t))))
-    (error nil)))
-
-(defun ar-th-delete (thing &optional no-delimiters iact check)
-  " "
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing no-delimiters iact check))
-	     (beg (or (ignore-errors (caar bounds)) (ignore-errors (car bounds))))
-	     (end (or (ignore-errors (cdr (cadr bounds)))(ignore-errors (cadr bounds))(ignore-errors (cadr (cadr bounds))))))
-	(if (eq thing 'comment)
-            (delete-region beg (1+ end))
-	  (delete-region beg end)))
-    (error nil)))
-
-(defun ar-th-delete-in-region (thing beg end &optional iact check no-delimiters)
-  "Delete THING in region. Delete line, if empty afterwards. "
-  (condition-case nil
-      (save-excursion
-        (goto-char beg)
-	(let ((orig (point)))
-	  (while (progn (ar-th-forward thing) (< orig (point)))
-	    (let ((bounds (ar-th-bounds thing no-delimiters iact check)))
-	      (delete-region (caar bounds) (cadr (cadr bounds)))
-	      ;; (when iact (message "%s at pos %d %d %s " thing (caar bounds) (cadr (cadr bounds)) "deleted"))
-	      (when (and (empty-line-p) (not (eobp)))
-		(delete-region (line-beginning-position) (1+ (line-end-position))))))))))
-
-(defun ar-th-commatize (thing &optional no-delimiters iact check)
-  " "
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing no-delimiters iact check))
-	     (beg (caar bounds))
-	     (end (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds))))))
-	(goto-char end)
-        (insert ","))
-    (error nil)))
-
-(defun ar-th-quote (thing &optional no-delimiters iact check)
-  " "
-  (condition-case nil
-      (let* ((bounds (ar-th-bounds thing no-delimiters iact check))
-	     (beg (caar bounds))
-	     (end (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds))))))
-        (goto-char beg)
-        (insert "'"))
-    (error nil)))
-
-(defun ar-th-interactive-backward-form (ap ep)
-  (goto-char ep)
-  (push-mark ap)
-  (exchange-point-and-mark)
-  (kill-new (buffer-substring-no-properties ap ep)))
-
-(defun ar-th-forward-function-call (thing arg)
-  (let (erg)
-    (while (< 0 arg)
-      (setq erg (funcall (get thing 'forward-op-at)))
-      (setq arg (1- arg)))
-    erg))
-
-(defun ar-th-backward-function-call (arg thing)
-  (let (erg)
-    (while
-	(> 0 arg)
-      (setq erg (funcall (get thing 'backward-op-at)))
-      (setq arg (1+ arg)))
-    erg))
-
-(defun ar-th-forward (thing &optional arg iact after)
-  "Return end-position, if successful, nil otherwise.
-
-searches backward with negative argument "
-  (let ((orig (point))
-	(arg (or arg 1)))
-    (if (< 0 arg)
-	(progn
-	  (ar-th-forward-function-call thing arg)
-	  (when (< orig (point))
-            (point)))
-      (if (functionp (get thing 'backward-op-at))
-	  (progn
-	    (or
-	     (ar-th-backward-function-call arg thing)
-	     (ar-th-backward-fallback arg thing)))
-	(when (functionp (get thing 'beginning-op-at))
-	  (funcall (get thing 'beginning-op-at))))
-      (when (< (point) orig)
-	(point)))))
-
-(defun ar-th-un-ml (thing &optional beg end)
-  (save-excursion
-    (save-restriction
-      (when (and beg end)
-        (narrow-to-region beg end))
-      (let\* ((startstring (eval (intern-soft (concat (format "%s" thing) "-startstring-atpt"))))
-              (endstring (concat (eval (intern-soft (concat (format "%s" thing) "-endstring-atpt")))))
-              (begstringpos
-               (progn
-                 (beginning-of-form-base startstring endstring)
-                 (if (looking-at startstring)
-                     (list (match-beginning 0) (match-end 0))
-                   (error "Can't see startstring"))))
-              (thisbeg (copy-marker (car begstringpos)))
-              thisend)
-             (forward-char 1)
-             (end-of-form-base startstring endstring)
-             (when (looking-back endstring (line-beginning-position))
-               (replace-match "")
-               (setq thisend (point-marker))
-               (delete-region (car begstringpos) (cadr begstringpos))
-               (list thisbeg thisend))))
-    (widen)))
-
-(defun ar-th-backward (thing &optional arg iact check)
-  "Returns beg and end of THING before point as a list. "
-  (condition-case nil
-      (ar-th-forward thing (- (or arg 1)) iact check)
-    (error nil)))
-
-(defvar paired-start-pos nil)
-
-(defun ar-th-transpose (thing &optional no-delimiters iact check)
-  "Returns position, when called from a program
- end of transposed section. "
-  (let* ((pos (point-marker))
-         (first (ar-th-bounds thing no-delimiters iact check))
-         (pos1 (if (ignore-errors (<= (car first) pos))
-                   first
-                 (ar-th-bounds thing no-delimiters iact check)))
-         (pos2 (progn
-                 (when (ignore-errors (< 1 arg))
-                   (ar-th-forward thing no-delimiters iact check))
-                 (ar-th-bounds thing no-delimiters iact check)))
-         (a (car pos1))
-         (b (copy-marker (cdr pos1)))
-         (c (car pos2))
-         (d (copy-marker (cdr pos2))))
-    (transpose-regions a b c d)
-    (if iact
-        (progn
-          (message "%s" (point))
-          (point))
-      (goto-char d)
-      d)))
-
-;; credits to sort-subr, sort.el
-;; (reverse nextrecfun endrecfun &optional startkeyfun endkeyfun predicate)
-(defun ar-th-sort (thing reverse beg end startkeyfun endkeyfun predicate)
-  (save-excursion
-    (save-restriction
-      (unless (buffer-narrowed-p)(narrow-to-region beg end))
-      (goto-char (point-min))
-      (let ((reverse (or reverse nil))
-            (startkeyfun (or startkeyfun nil))
-            (endkeyfun (or endkeyfun nil))
-            (predicate (or predicate nil))
-            (this-beg (ar-th-beg thing 0)))
-        (while (not (or (eobp)(stringp (ar-th thing))))
-          (forward-char 1))
-        (if (eq thing 'number)
-            (ar-sort-numbers-subr reverse
-				  (function (lambda () (if (ar-th-forward thing) (ar-th-gotobeg thing) (goto-char (point-max)))))
-				  (function (lambda () (ar-th-gotoend thing)(forward-char 1))) startkeyfun endkeyfun predicate)
-          (sort-subr reverse
-                     (function (lambda () (if (ar-th-forward thing) (ar-th-gotobeg thing) (goto-char (point-max)))))
-                     (function (lambda () (ar-th-gotoend thing)(forward-char 1))) startkeyfun endkeyfun predicate))))))
-
-(defun ar-sort-numbers-subr (reverse nextrecfun endrecfun
-                                     &optional startkeyfun endkeyfun predicate)
-  "A patched sort-subr. Divides buffer into records and sort them.
-
-We divide the accessible portion of the buffer into disjoint pieces
-called sort records.  A portion of each sort record (perhaps all of
-it) is designated as the sort key.  The records are rearranged in the
-buffer in order by their sort keys.  The records may or may not be
-contiguous.
-
-Usually the records are rearranged in order of ascending sort key.
-If REVERSE is non-nil, they are rearranged in order of descending sort key.
-The variable `sort-fold-case' determines whether alphabetic case affects
-the sort order.
-
-The next four arguments are functions to be called to move point
-across a sort record.  They will be called many times from within sort-subr.
-
-NEXTRECFUN is called with point at the end of the previous record.
-It moves point to the start of the next record.
-It should move point to the end of the buffer if there are no more records.
-The first record is assumed to start at the position of point when sort-subr
-is called.
-
-ENDRECFUN is called with point within the record.
-It should move point to the end of the record.
-
-STARTKEYFUN moves from the start of the record to the start of the key.
-It may return either a non-nil value to be used as the key, or
-else the key is the substring between the values of point after
-STARTKEYFUN and ENDKEYFUN are called.  If STARTKEYFUN is nil, the key
-starts at the beginning of the record.
-
-ENDKEYFUN moves from the start of the sort key to the end of the sort key.
-ENDKEYFUN may be nil if STARTKEYFUN returns a value or if it would be the
-same as ENDRECFUN.
-
-PREDICATE is the function to use to compare keys.  If keys are numbers,
-it defaults to `<', otherwise it defaults to `string<'."
-  ;; Heuristically try to avoid messages if sorting a small amt of text.
-  (let ((messages (> (- (point-max) (point-min)) 50000)))
-    (save-excursion
-      (if messages (message "Finding sort keys..."))
-      (let* ((sort-lists (sort-build-lists nextrecfun endrecfun
-					   startkeyfun endkeyfun))
-	     (old (reverse sort-lists))
-	     (case-fold-search sort-fold-case))
-	(if (null sort-lists)
-	    ()
-	  (or reverse (setq sort-lists (nreverse sort-lists)))
-	  (if messages (message "Sorting records..."))
-	  (setq sort-lists
-		(sort sort-lists
-                      (lambda (a b)
-                        (< (string-to-number (buffer-substring-no-properties (caar a) (cdar a)))(string-to-number (buffer-substring-no-properties (caar b)(cdar b)))))))
-	  (if reverse (setq sort-lists (nreverse sort-lists)))
-	  (if messages (message "Reordering buffer..."))
-	  (sort-reorder-buffer sort-lists old)))
-      (if messages (message "Reordering buffer... Done"))))
-  nil)
-
-(defun delim-slash-function (arg)
-  "Insert ARG backslashes. "
-  (when arg
-    (dotimes (i arg) (insert 47))))
-
-(defun ar-th-delim-intern (thing &optional beg end beg-char end-char arg)
-  (ignore-errors
-    (let* ((begstr (or beg-char th-beg-delimiter))
-           (endstr (or end-char th-end-delimiter)))
-      (when beg
-        (goto-char beg)
-        (delim-slash-function arg)
-        (insert begstr)
-        (goto-char end)
-        (delim-slash-function arg)
-        (insert endstr)))))
-
-(defun ar-th-delim (thing &optional arg beg-char end-char iact beg end)
-  "Process begin and end of region according to value of
-  `delim-action'
-  If no region is active, process borders of THING-at-point
-  according to value of delim-action-beginning- resp. -end-position
-  Default is symbol-at.
-  With  or arg `escaped' to `t': insert escaped doublequotes"
-  (interactive "*p")
-  (save-restriction
-    (let ((orig (point))
-	  (beg (or beg (when (use-region-p) (region-beginning))))
-	  (end (ignore-errors (copy-marker (or (car-safe end) end (when (use-region-p) (region-end))))))
-	  done narrow)
-      (when (and beg end)
-	;; narrowing avoids scanning the whole buffer
-	(narrow-to-region beg end)
-	(ar-th-delim-intern thing beg end beg-char end-char)
-	t))))
-
-(defun ar-th-base-copy-or (kind arg &optional check)
-  "Internally used by ‘ar-parentize-or-copy-atpt’ and the like."
-  (let* ((expr (format "%s" kind))
-	 (arg (if arg (prefix-numeric-value arg) 1))
-	 (suffix
-	  (when (or (member kind ar-paired-delimit-aktiv)
-		    ;; (loop for e in ar-unpaired-delimit-aktiv if (member kind e) return e))
-		    (member kind ar-unpaired-delimit-aktiv))
-	    (if (string-match "e$" expr)
-		"d" "ed")))
-	 erg bounds)
-    (cond
-     ((eq 2 arg)
-      (if (use-region-p)
-	  (setq erg (funcall (intern-soft (concat "ar-trim- " expr "-in-region-atpt"))))
-	(or (setq erg (funcall (intern-soft (concat "ar-trim-" expr suffix "-atpt"))))
-	    (funcall (intern-soft (concat "ar-" expr "-" copy-or-alternative "-atpt")) arg))))
-     ((eq 4 (prefix-numeric-value arg))
-      (if (use-region-p)
-	  (setq erg (funcall (intern-soft (concat "ar-" expr "-in-region-atpt"))))
-	(or (setq erg (funcall (intern-soft (concat "ar-" expr suffix "-atpt")) arg))
-	    (funcall (intern-soft (concat "ar-" expr "-" copy-or-alternative "-atpt"))))))
-     ((< arg 0)
-      (setq erg (funcall (intern-soft (concat "ar-kill-" expr suffix "-atpt")))))
-     ((< 0 arg)
-      (or (setq bounds (funcall (intern-soft (concat "ar-bounds-of-" expr suffix "-atpt"))))
-	  (setq bounds (funcall (intern-soft (concat "ar-bounds-of-" expr "-" copy-or-alternative "-atpt")))))
-      (when bounds
-	(setq beg (cond ((ignore-errors (numberp (car-safe bounds)))
-			 (car-safe bounds))
-			((ignore-errors (caar bounds))
-			 (caar bounds))
-			(t (car-safe bounds))))
-	(setq end (or (ignore-errors (cadr (cadr bounds)))
-		      (ignore-errors (cdr (cadr bounds)))(cdr bounds)))
-	(when (and beg end)
-	  (setq erg (kill-new (buffer-substring-no-properties beg end)))
-	  (goto-char beg)
-	  (push-mark (point) t t)
-	  (goto-char end))))
-     ((use-region-p)
-      (setq erg (funcall (intern-soft (concat "ar-" expr "-in-region-atpt"))))))
-    erg))
-
-(defvar ar-werkstatt-mode-map nil
-  "Keymap used in Sh-Werkstatt mode.")
-
-
-(define-derived-mode werkstatt emacs-lisp-mode "Werk"
-  ;; (kill-all-local-variables)
-  ;; (setq major-mode 'ar-werkstatt
-  ;; mode-name "Sh-Werkstatt")
-  (use-local-map ar-werkstatt-mode-map)
-  (and ar-werkstatt-hs-minor-mode-p
-       (add-hook 'ar-werkstatt-mode-hook 'hs-minor-mode)))
-
-(defun ar-th-delimit--intern (thing string1 string2 &optional arg iact check)
-  (let* ((bounds (ar-th-bounds thing nil iact check))
-         (beg (or (ignore-errors (caar bounds))(car-safe bounds)))
-	 (end (or (ignore-errors (cdr (cadr bounds)))(ignore-errors (cadr (cadr bounds)))(cdr-safe bounds))))
-    (ar-th-delim thing arg string1 string2 iact beg end)))
-
 ;; ar-insert-delimit-forms-intern ar-paired-delimit-aktiv-raw: start
 
-(defun ar-th-brace (thing &optional arg iact check)
+(defun ar-th-symbol (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "{" "}" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "`" "'" no-delimiters))
 
-(defun ar-th-bracket (thing &optional arg iact check)
+(defun ar-th-brace (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "[" "]" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "{" "}" no-delimiters))
 
-(defun ar-th-lesserangle (thing &optional arg iact check)
+(defun ar-th-bracket (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "<" ">" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "[" "]" no-delimiters))
 
-(defun ar-th-greaterangle (thing &optional arg iact check)
+(defun ar-th-lesserangle (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing ">" "<" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "<" ">" no-delimiters))
 
-(defun ar-th-curvedsinglequote (thing &optional arg iact check)
+(defun ar-th-greaterangle (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "‘" "’" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing ">" "<" no-delimiters))
 
-(defun ar-th-curveddoublequote (thing &optional arg iact check)
+(defun ar-th-curvedsinglequote (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "“" "”" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "‘" "’" no-delimiters))
 
-(defun ar-th-parentize (thing &optional arg iact check)
+(defun ar-th-curveddoublequote (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "(" ")" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "“" "”" no-delimiters))
+
+(defun ar-th-parentize (thing &optional no-delimiters)
+  " "
+  (interactive "*P") 
+  (ar-th-delim thing "(" ")" no-delimiters))
 ;; ar-insert-delimit-forms-intern ar-paired-delimit-aktiv-raw: end
 
 
-;; ar-triplequote-raw start
-
-(defun ar-th-triplequote (thing &optional arg iact check)
-  " "
-  (ar-th-delimit--intern thing "\"\"\"\\\\\\\\\|\'\'\'" "\"\"\"\\\\\\\\\|\'\'\'" arg iact check))
-
-(defun ar-th-triplequotedq (thing &optional arg iact check)
-  " "
-  (ar-th-delimit--intern thing "\"\"\"" "\"\"\"" arg iact check))
-
-(defun ar-th-triplequotesq (thing &optional arg iact check)
-  " "
-  (ar-th-delimit--intern thing "'''" "'''" arg iact check))
-
-(defun ar-th-triplebacktick (thing &optional arg iact check)
-  " "
-  (ar-th-delimit--intern thing "```" "```" arg iact check))
-
-;; ar-triplequote-raw end
-
 ;; ar-insert-delimit-forms-intern ar-unpaired-delimit-aktiv-raw: start
 
-(defun ar-th-colon (thing &optional arg iact check)
+(defun ar-th-colon (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing ":" ":" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing ":" ":" no-delimiters))
 
-(defun ar-th-cross (thing &optional arg iact check)
+(defun ar-th-cross (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "+" "+" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "+" "+" no-delimiters))
 
-(defun ar-th-doubleslash (thing &optional arg iact check)
+(defun ar-th-doubleslash (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "//" "//" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "//" "//" no-delimiters))
 
-(defun ar-th-backslash (thing &optional arg iact check)
+(defun ar-th-backslash (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "\\" "\\" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "\\" "\\" no-delimiters))
 
-(defun ar-th-backtick (thing &optional arg iact check)
+(defun ar-th-backtick (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "`" "`" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "`" "`" no-delimiters))
 
-(defun ar-th-dollar (thing &optional arg iact check)
+(defun ar-th-dollar (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "$" "$" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "$" "$" no-delimiters))
 
-(defun ar-th-doublebacktick (thing &optional arg iact check)
+(defun ar-th-doublequote (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "``" "``" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "\"" "\"" no-delimiters))
 
-(defun ar-th-doublequote (thing &optional arg iact check)
+(defun ar-th-equalize (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "\"" "\"" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "=" "=" no-delimiters))
 
-(defun ar-th-equalize (thing &optional arg iact check)
+(defun ar-th-escape (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "=" "=" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "\\" "\\" no-delimiters))
 
-(defun ar-th-escape (thing &optional arg iact check)
+(defun ar-th-hash (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "\\" "\\" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "#" "#" no-delimiters))
 
-(defun ar-th-hash (thing &optional arg iact check)
+(defun ar-th-hyphen (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "#" "#" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "-" "-" no-delimiters))
 
-(defun ar-th-hyphen (thing &optional arg iact check)
+(defun ar-th-pipe (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "-" "-" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "|" "|" no-delimiters))
 
-(defun ar-th-pipe (thing &optional arg iact check)
+(defun ar-th-singlequote (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "|" "|" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "'" "'" no-delimiters))
 
-(defun ar-th-singlequote (thing &optional arg iact check)
+(defun ar-th-slash (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "'" "'" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "/" "/" no-delimiters))
 
-(defun ar-th-slash (thing &optional arg iact check)
+(defun ar-th-star (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "/" "/" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "*" "*" no-delimiters))
 
-(defun ar-th-star (thing &optional arg iact check)
+(defun ar-th-tild (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "*" "*" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "~" "~" no-delimiters))
 
-(defun ar-th-tild (thing &optional arg iact check)
+(defun ar-th-underscore (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "~" "~" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "_" "_" no-delimiters))
 
-(defun ar-th-triplebacktick (thing &optional arg iact check)
+(defun ar-th-whitespace (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "```" "```" arg iact check))
-
-(defun ar-th-underscore (thing &optional arg iact check)
-  " "
-  (ar-th-delimit--intern thing "_" "_" arg iact check))
-
-(defun ar-th-whitespace (thing &optional arg iact check)
-  " "
-  (ar-th-delimit--intern thing " " " " arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing " " " " no-delimiters))
 ;; ar-insert-delimit-forms-intern ar-unpaired-delimit-aktiv-raw: end
 
 ;; ar-atpt-data-forms-aktiv start
 
-(defun ar-th-beginendquote (thing &optional arg iact check)
+(defun ar-th-beginendquote (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "\\begin{quote}" "\\end{quote}" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "\\begin{quote}" "\\end{quote}" no-delimiters))
 
-(defun ar-th-blok (thing &optional arg iact check)
+(defun ar-th-blok (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "{% " " %}" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "{% " " %}" no-delimiters))
 
-(defun ar-th-doublebackslash (thing &optional arg iact check)
+(defun ar-th-doublebackslash (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "\\\\" "\\\\" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "\\\\" "\\\\" no-delimiters))
 
-(defun ar-th-doublebackslashparen (thing &optional arg iact check)
+(defun ar-th-doublebackslashparen (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "\\\\(" "\\\\)" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "\\\\(" "\\\\)" no-delimiters))
 
-(defun ar-th-doublebacktick (thing &optional arg iact check)
+(defun ar-th-doublebacktick (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "``" "``" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "``" "``" no-delimiters))
 
-(defun ar-th-triplebacktick (thing &optional arg iact check)
+(defun ar-th-triplebacktick (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "```" "```" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "```" "```" no-delimiters))
 
-(defun ar-th-backslashparen (thing &optional arg iact check)
+(defun ar-th-backslashparen (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "\\(" "\\)" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "\\(" "\\)" no-delimiters))
 
-(defun ar-th-slashparen (thing &optional arg iact check)
+(defun ar-th-slashparen (thing &optional no-delimiters)
   " "
-  (ar-th-delimit--intern thing "////(" "////)" arg iact check))
+  (interactive "*P") 
+  (ar-th-delim thing "////(" "////)" no-delimiters))
+
+(defun ar-th-triplequotedq (thing &optional no-delimiters)
+  " "
+  (interactive "*P") 
+  (ar-th-delim thing "\"\"\"" "\"\"\"" no-delimiters))
+
+(defun ar-th-triplequotesq (thing &optional no-delimiters)
+  " "
+  (interactive "*P") 
+  (ar-th-delim thing "'''" "\"\"\"\\|'''" no-delimiters))
 ;; ar-atpt-data-forms-aktiv end
-
-
-(defun ar-th-slash-base (thing startstring endstring &optional arg iact)
-  (let* ((bounds (ar-th-bounds thing arg iact))
-         (beg (caar bounds))
-         (end (copy-marker (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds)))))))
-    (goto-char end)
-    (forward-char -1)
-    (insert endstring)
-    (goto-char beg)
-    (insert startstring)
-    (goto-char (1+ end))))
 
 
 ;; ar-insert-thingatpt-syntax-funktionen start
@@ -3697,7 +1596,7 @@ it defaults to `<', otherwise it defaults to `string<'."
          (erg (logand (car (syntax-after pos)) 65535)))
     (when erg (message "%s" erg)) erg))
 
-(defun syntax-class-bfpt (&optional arg) 
+(defun syntax-class-bfpt ()
   "Return the syntax class part of the syntax at point. "
   (interactive "p")
   (let ((erg (logand (car (syntax-after (1- (point)))) 65535)))
@@ -3742,17 +1641,17 @@ it defaults to `<', otherwise it defaults to `string<'."
     (ar-syntax-class-to-char
      (syntax-class syntax)))))
 
-(defun ar-forward-syntax-class (&optional arg)
+(defun ar-forward-syntax-class ()
   "Behavior like forward-same-syntax."
   (interactive)
   (ar--forward-syntax-class-intern (syntax-after (point))))
 
 (setq ar-forward-syntax-classes-list (list 0 1 2 3 6))
-(defun ar-forward-syntax-classes (&optional arg)
+(defun ar-forward-syntax-classes ()
   "Skip chars forward belonging to syntax-classes ‘ar-forward-syntax-classes-list’"
   (interactive "^p")
   (let ((orig (point))
-	done)
+	done last)
     (while (and (not (eobp))
 		(setq last (point))
 		(prog1 (not done)
@@ -3772,7 +1671,7 @@ it defaults to `<', otherwise it defaults to `string<'."
       (message "%s" erg)
       erg)))
 
-(defun syntax-bfpt (&optional arg) 
+(defun syntax-bfpt (&optional arg)
   (interactive "p")
   (let ((stax (syntax-after (1- (point)))))
     (when arg
@@ -3841,7 +1740,7 @@ Travel this INDENT forward"
     last))
 
 (defun ar-forward-indent ()
-  "Go to the end of a section of equal indentation.
+  "Go to the end of a section of equal indentation..
 
 If already at the end, go down to next indent in buffer
 Returns final position when called from inside section, nil otherwise"
@@ -3875,7 +1774,8 @@ Returns final position when called from inside section, nil otherwise"
   (interactive)
   (let ((beg (ar-beginning-of-indent))
 	(end (ar-end-of-indent)))
-    (push-mark)
+    (goto-char end)
+    (set-mark (point))
     (goto-char beg)
     (exchange-point-and-mark)))
 
@@ -3903,58 +1803,9 @@ Returns final position when called from inside section, nil otherwise"
    '(underscored "_")
    '(whitespaced " ")))
 
-(defun ar--transform-delimited-new-delimiter (to)
-  "Return the new delimiter - either paired or unpaired. "
-  (let ((erg))
-    (dolist (ele ar-paired-delimited-passiv-raw)
-      (when (member to ele)
-	(setq erg (cdr ele))
-	(message "%s" (car erg))))
-    (unless erg
-      (dolist (ele ar-unpaired-delimited-raw)
-	(when (member to ele)
-	  (setq erg (cdr ele))
-	  (message "%s" (car erg)))))
-    erg))
-
-(defun ar--transform-insert-opening-delimiter-according-to-type (new-delimiter)
-  "If a cons, insert car. "
-  (insert (car new-delimiter)))
-
-(defun ar--transform-return-closing-delimiter-according-to-type (new-delimiter)
-  "Return closing delimiter. "
-  (if (< 1 (length new-delimiter))
-      (cadr new-delimiter)
-    (car new-delimiter)))
-
-(defun ar--transform-delimited-intern (from to)
-  "Expects string. "
-  (save-restriction
-    (let* ((beg (when (use-region-p) (region-beginning)))
-	   (end (when (use-region-p)
-		  (prog1
-		      (region-end)
-		    (narrow-to-region beg (region-end))
-		    (goto-char beg))))
-	   (bounds (ignore-errors (funcall (car (read-from-string (concat "ar-bounds-of-" from "-atpt"))))))
-	   (end (copy-marker (or (ignore-errors (cadr (cadr bounds)))(ignore-errors (cdr (cadr bounds))))))
-	   (new-delimiter (ar--transform-delimited-new-delimiter (car (read-from-string to)))))
-      (if (and bounds new-delimiter)
-	  (progn
-	    ;; (funcall (car (read-from-string (concat "ar-trim-" from "-atpt"))))
-	    (goto-char (caar bounds))
-	    (delete-char 1)
-	    ;; (insert "[")
-	    (ar--transform-insert-opening-delimiter-according-to-type new-delimiter)
-	    (goto-char end)
-	    (delete-char -1)
-	    ;; (insert "]")
-	    (insert (ar--transform-return-closing-delimiter-according-to-type new-delimiter)))
-	(message (concat "ar--transform-delimited-intern: can't see " from))))))
-
-
 (defvar ar-paired-delimited-passiv-raw
   (list
+   '(symboled "`" "'")
    '(braced "{" "}")
    '(bracketed "[" "]")
    '(lesserangled "<" ">")
@@ -3979,6 +1830,7 @@ Returns final position when called from inside section, nil otherwise"
 
 (setq ar-paired-delimit-aktiv-raw
       (list
+       '(symbol 96 39)
        '(brace 123 125)
        '(bracket 91 93)
        '(lesserangle 60 62)
@@ -3990,6 +1842,7 @@ Returns final position when called from inside section, nil otherwise"
 
 (setq ar-paired-delimit-aktiv
       (list
+       'symbol
        'brace
        'bracket
        'lesserangle
@@ -4025,7 +1878,6 @@ Returns final position when called from inside section, nil otherwise"
        '(backslash "\\\\")
        '(backtick "`")
        '(dollar "$")
-       '(doublebacktick "``")
        '(doublequote "\"")
        '(equalize "=")
        '(escape "\\\\")
@@ -4036,7 +1888,6 @@ Returns final position when called from inside section, nil otherwise"
        '(slash "/")
        '(star "*")
        '(tild "~")
-       '(triplebacktick "```")
        '(underscore "_")
        '(whitespace " ")
        ))
@@ -4049,7 +1900,6 @@ Returns final position when called from inside section, nil otherwise"
        'backslash
        'backtick
        'dollar
-       'doublebacktick
        'doublequote
        'equalize
        'escape
@@ -4060,7 +1910,6 @@ Returns final position when called from inside section, nil otherwise"
        'slash
        'star
        'tild
-       'triplebacktick
        'underscore
        'whitespace
        ))
@@ -4069,46 +1918,6 @@ Returns final position when called from inside section, nil otherwise"
       (list
        'commatize
        'quote
-       ))
-
-(setq ar-unpaired-delimited-passiv-zahlenform-raw
-      (list
-       '(backslashed 92)
-       '(backticked 96)
-       '(coloned 58)
-       '(crossed 43)
-       '(dollared 36)
-       '(doublequoted 34)
-       '(equalized 61)
-       '(hashed 35)
-       '(hyphened 45)
-       '(piped 124)
-       '(singlequoted 39)
-       '(slashed 47)
-       '(stared 42)
-       '(tilded 126)
-       '(underscored 95)
-       '(whitespaced 32)
-       ))
-
-(setq ar-unpaired-delimited-passiv-zahlenform
-      (list
-       'backslashed
-       'backticked
-       'coloned
-       'crossed
-       'dollared
-       'doublequoted
-       'equalized
-       'hashed
-       'hyphened
-       'piped
-       'singlequoted
-       'slashed
-       'stared
-       'tilded
-       'underscored
-       'whitespaced
        ))
 
 (setq ar-atpt-data-forms-aktiv-raw
@@ -4121,6 +1930,8 @@ Returns final position when called from inside section, nil otherwise"
        '("triplebacktick" "```" "```" 'move "1" nil t 'ar-escaped)
        '("backslashparen" "\\\\(" "\\\\)" nil 'move "1" nil nil 'ar-escaped)
        '("slashparen" "////(" "////)" nil 'move "1" nil nil 'ar-escaped)
+       '("triplequotedq" "\\\"\\\"\\\"" nil 'move 1 nil nil 'ar-escaped)
+       '("triplequotesq" "'''" "\\\"\\\"\\\"\\\\|'''" nil 'move 1 nil nil 'ar-escaped)
        ))
 
 (setq ar-atpt-data-forms-aktiv
@@ -4133,6 +1944,8 @@ Returns final position when called from inside section, nil otherwise"
        'triplebacktick
        'backslashparen
        'slashparen
+       'triplequotedq
+       'triplequotesq
        ))
 
 (setq ar-atpt-data-forms-passiv-raw
@@ -4146,6 +1959,8 @@ Returns final position when called from inside section, nil otherwise"
        '("tabledatap" "<td[^>]*>" "</td>" nil 'move "1" nil nil nil)
        '("backslashedparen" "\\\\\\\\(" "\\\\\\\\)" nil 'move "1" nil nil 'ar-escaped)
        '("slashedparen" "////////(" "////////)" nil 'move "1" nil nil 'ar-escaped)
+       '("triplequoteddq" "\\\"\\\"\\\"\\\\|'''" "\\\"\\\"\\\"\\\\|'''" nil 'move 1 nil nil 'ar-escaped)
+       '("triplequotedsq" "\\\"\\\"\\\"\\\\|'''" "\\\"\\\"\\\"\\\\|'''" nil 'move 1 nil nil 'ar-escaped)
        '("xslstylesheetp" "<xsl:stylesheet[^<]+>.*$" "</xsl:stylesheet>" nil 'move "1" nil nil nil)
        ))
 
@@ -4160,6 +1975,8 @@ Returns final position when called from inside section, nil otherwise"
        'tabledatap
        'backslashedparen
        'slashedparen
+       'triplequoteddq
+       'triplequotedsq
        'xslstylesheetp
        ))
 
@@ -4191,22 +2008,6 @@ Returns final position when called from inside section, nil otherwise"
        'triplequotedsq
        ))
 
-(setq ar-triplequote-raw
-      (list
-       '(triplequote "\"\"\"\\\\|'''")
-       '(triplequotedq "\"\"\"")
-       '(triplequotesq "'''")
-       '(triplebacktick "```")
-       ))
-
-(setq ar-triplequote
-      (list
-       'triplequote
-       'triplequotedq
-       'triplequotesq
-       'triplebacktick
-       ))
-
 (setq ar-atpt-expression-list
       (list
        'block
@@ -4223,22 +2024,6 @@ Returns final position when called from inside section, nil otherwise"
        'string
        ))
 
-(setq ar-expression-triplequote-raw
-      (list
-       '(triplequote "\"\"\"\\\\|'''")
-       '(triplequotedq "\"\"\"")
-       '(triplequotesq "'''")
-       '(triplebacktick "```")
-       ))
-
-(setq ar-expression-triplequote
-      (list
-       'triplequote
-       'triplequotedq
-       'triplequotesq
-       'triplebacktick
-       ))
-
 (setq ar-atpt-markup-list
       (list
        'beginendquote
@@ -4253,6 +2038,7 @@ Returns final position when called from inside section, nil otherwise"
        'mlattribut
        'mltag
        'slashedparen
+       'symbol
        'tabledata
        'xslstylesheet
        'xsltemplate
@@ -4261,6 +2047,7 @@ Returns final position when called from inside section, nil otherwise"
 (setq ar-paired-delimited-passiv-raw
       (list
        '(braced "{" "}")
+       '(symboled "`" "'")
        '(bracketed "[" "]")
        '(lesserangled "<" ">")
        '(greaterangled ">" "<")
@@ -4272,6 +2059,7 @@ Returns final position when called from inside section, nil otherwise"
 (setq ar-paired-delimited-passiv
       (list
        'braced
+       'symboled
        'bracketed
        'lesserangled
        'greaterangled
@@ -4349,7 +2137,6 @@ Returns final position when called from inside section, nil otherwise"
        'page
        'paragraph
        'phone
-       'region
        'sentence
        'sexp
        'shstruct

@@ -175,7 +175,7 @@ Shift \"y\" to \"a\".
 	           (ar-replace-atpt newval beg end "s"))))
       (error "Not a number"))))
 
-(defalias 'ar-raise-in-region-maybe 'ar-raise-numbers-in-region)
+;; (defalias 'ar-raise-in-region-maybe 'ar-raise-numbers-in-region)
 
 (defun ar-raise-in-region-maybe (&optional step beg end)
   "With use-region-p raise/decrease integers in region.
