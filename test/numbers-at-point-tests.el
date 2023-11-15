@@ -1,4 +1,4 @@
-;;; numbers-at-point-tests.el -- more tests -*- lexical-binding: t; -*- 
+;;; numbers-at-point-tests.el -- more tests -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2010-2016 Andreas Röhler, unless
 ;; indicated otherwise
@@ -28,41 +28,49 @@
 (ert-deftest number-at-point-integers-atpt-4 ()
   (ar-test-with-elisp-buffer
       "#x75"
+    (goto-char (point-max))
+    (skip-chars-backward " \t\r\n\f")
     (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-5 ()
   (ar-test-with-elisp-buffer
       "#o165"
+    (goto-char (point-max))
+    (skip-chars-backward " \t\r\n\f")
     (forward-char -1)
     (should (eq 118 (1+ (car (read-from-string (ar-number-atpt))))))))
 
 (ert-deftest number-at-point-integers-atpt-6 ()
   (ar-test-with-elisp-buffer
       "117"
+    (goto-char (point-max))
+    (skip-chars-backward " \t\r\n\f")
     (forward-char -1)
-    (ar-raise-integer-atpt)
+    (ar-shift-atpt)
     (should (string= "118" (ar-number-atpt)))))
 
 ;; (ert-deftest number-at-point-integers-atpt-7 ()
 ;;   (ar-test-with-elisp-buffer
 ;;       "#x9"
 ;;     (forward-char -1)
-;;     (ar-raise-integer-atpt)
-;;     (sit-for 1) 
+;;     (ar-shift-atpt)
+;;     (sit-for 1)
 ;;     (should (string= "#xa" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-8 ()
   (ar-test-with-elisp-buffer
       "#o7"
+    (goto-char (point-max))
+    (skip-chars-backward " \t\r\n\f")
     (forward-char -1)
-    (ar-raise-integer-atpt)
+    (ar-shift-atpt)
     (should (string= "#o10" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-9 ()
   (ar-test-with-elisp-buffer
       "117 2"
-    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (should (string= "118" (ar-number-atpt)))
     (goto-char (1- (point-max)))
     (should (string= "3" (ar-number-atpt)))))
@@ -70,34 +78,36 @@
 (ert-deftest number-at-point-integers-atpt-13 ()
   (ar-test-with-elisp-buffer
       "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
-    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (goto-char (point-min))
-    (skip-chars-forward "^0-9") 
+    (skip-chars-forward "^0-9")
     (should (string= "2" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "3" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "4" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-atpt-14 ()
   (ar-test-with-elisp-buffer
       "foo-1.txt\nfoo-2.txt\nfoo-3.txt"
-    (ar-raise-integers-in-region-maybe 1 (point-min) (point-max))
+    (ar-raise-in-region-maybe 1 (point-min) (point-max))
     (goto-char (point-min))
-    (skip-chars-forward "^0-9") 
+    (skip-chars-forward "^0-9")
     (should (string= "2" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "3" (ar-number-atpt)))
-    (forward-char 1) 
-    (skip-chars-forward "^0-9") 
+    (forward-char 1)
+    (skip-chars-forward "^0-9")
     (should (string= "4" (ar-number-atpt)))))
 
 (ert-deftest number-at-point-integers-backward-1 ()
   (ar-test-with-elisp-buffer
       "foo-1.txt\nfoo-2.txt"
+    (goto-char (point-max))
+    (skip-chars-backward " \t\r\n\f")
     (ar-backward-number-atpt)
     (should (string= "2" (ar-number-atpt)))
     (ar-backward-number-atpt)
