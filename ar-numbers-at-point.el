@@ -1,13 +1,13 @@
-;;; numbers-at-point.el --- Raise or decrease positive integers -*- lexical-binding: t; -*-
+;;; ar-numbers-at-point.el --- Raise or decrease positive integers -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2016 Andreas Röhler, unless
+;; Copyright (C) 2010-2023 Andreas Röhler, unless
 ;; indicated otherwise
 
 ;; Author: Andreas Röhler <andreas.roehler@easy-emacs.de>, unless
 ;; indicated otherwise
 
 ;; Version: 0.1
-;; Source: https://github.com/andreas-roehler/numbers-at-point.git
+;; Source: https://github.com/andreas-roehler/ar-numbers-at-point.git
 
 ;; Keywords: convenience
 
@@ -31,9 +31,9 @@
 ;;; Code:
 
 (require 'ar-subr)
-(require 'beg-end)
-(require 'thingatpt-utils-core)
-(require 'thing-at-point-utils)
+(require 'ar-beg-end)
+(require 'ar-thingatpt-utils-core)
+(require 'ar-thingatpt-utils)
 
 (defun ar-add-to-integer-and-forward (&optional step)
   (interactive "p*")
@@ -260,5 +260,5 @@ Numbers are raised if STEP is positive, decreased otherwise"
     ;; (exchange-point-and-mark)
 	    ))
 
-(provide 'numbers-at-point)
-;;; numbers-at-point.el ends her
+(provide 'ar-numbers-at-point)
+;;; ar-numbers-at-point.el ends her

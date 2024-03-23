@@ -1,6 +1,6 @@
-;;; thingatpt-utils-core.el --- th-at-point edit functions -*- lexical-binding: t; -*-
+;;; ar-thingatpt-utils-core.el --- th-at-point edit functions -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2023 Andreas Röhler, unless
+;; Copyright (C) 2010-2024 Andreas Röhler, unless
 ;; indicated otherwise
 
 ;; Author: Andreas Röhler <andreas.roehler@easy-emacs.de>, unless
@@ -35,6 +35,9 @@
 ;; alpha-numerical chars below and around cursor as a
 ;; string. ‘ar-bounds-of-alnum-atpt’ returns the
 ;; borders of that string as a list and so on.
+
+;; ‘ar-delimited-atpt’ returns buffer string between delimiters, defined customizable vars
+;; ‘th-beg-delimiter’, ‘th-end-delimiter’, ‘ar-delimiters-atpt’.
 
 ;; Presently for a given THING the following is
 ;; implemented:
@@ -113,7 +116,7 @@
 ;; behaviour in such, as ‘ar-forward-word-atpt’ stops
 ;; not after THING, but on the last char of
 ;; THING. That's in order to enable a call of
-;; thing-at-point functions at the end
+;; thingatpt functions at the end
 ;; position. Otherwise, when cursor stops after word
 ;; (THING) as does ‘forward-word’, ‘ar-word-atpt’ would return
 ;; nil.
@@ -132,7 +135,7 @@
 ;; of execution via ‘ar-th-test-delay’
 
 ;; Diffs to basics of required thingatpt.el:
-;; ‘bounds-of-thing-at-point’ is replaced by a new
+;; ‘bounds-of-thingatpt’ is replaced by a new
 ;; ‘ar-th-bounds’, which now first searches
 ;; backward. As a consequence several
 ;; ‘beginning-op-at’ and ‘end-op-at’ constructs had
@@ -202,7 +205,7 @@
 ;; beginning-op-at and end-op-at. Point is stored
 ;; after move, beginning and end delivered as pair: as
 ;; consed bounds-of-thing. It's easy to write your own
-;; thing-at-point functions that way. You need the
+;; thingatpt functions that way. You need the
 ;; caller and both move forms:
 
 ;; (defun MY-FORM-atpt (&optional arg)
@@ -253,7 +256,7 @@
 
 ;;; Code:
 (require 'ar-subr)
-(require 'beg-end)
+(require 'ar-beg-end)
 (require 'hideshow)
 (require 'ar-thingatpt-basic-definitions)
 (defconst Emacs-Werkstatt-version "1.5")
@@ -272,16 +275,6 @@ Used by ‘ar-sort-numbers-subr’"
 
   :type 'boolean
   :group 'werkstatt)
-
-(defvar ar-match-in-string-p nil
-  "If an expression starts inside a string.
-
-Internal use only.")
-
-(defvar ar-match-in-comment-p nil
-  "If an expression starts inside a comment.
-
-Internal use only.")
 
 (defcustom ar-werkstatt-hs-minor-mode-p nil
   ""
@@ -854,154 +847,154 @@ XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\
 ;; Braced
 (put 'braced 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "{" "}" nil 'move 0 nil 'ar-syntax)))
 
 (put 'braced 'end-op-at
      (lambda ()
-       (end-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "{" "}" nil 'move 0 nil 'ar-syntax)))
 
 (put 'braced 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base "{" "}" nil 'move 0  nil 'ar-syntax t))))
 
 (put 'braced 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base "{" "}" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base "{" "}" nil 'move 0  nil 'ar-syntax t))))
 
 ;; Symboled
 (put 'symboled 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "`" "'" nil 'move 0 nil 'ar-syntax)))
 
 (put 'symboled 'end-op-at
      (lambda ()
-       (end-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "`" "'" nil 'move 0 nil 'ar-syntax)))
 
 (put 'symboled 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base "`" "'" nil 'move 0  nil 'ar-syntax t))))
 
 (put 'symboled 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base "`" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base "`" "'" nil 'move 0  nil 'ar-syntax t))))
 
 ;; Bracketed
 (put 'bracketed 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "\\[" "\]" nil 'move 0 t 'ar-syntax)))
 
 (put 'bracketed 'end-op-at
      (lambda ()
-       (end-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "\\[" "\]" nil 'move 0 t 'ar-syntax)))
 
 (put 'bracketed 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base "\\[" "\]" nil 'move 0  t 'ar-syntax t))))
 
 (put 'bracketed 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base "\\[" "\]" nil 'move 0 ar-match-in-comment-p t 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base "\\[" "\]" nil 'move 0  t 'ar-syntax t))))
 
 ;; Lesserangled
 (put 'lesserangled 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "<" ">" nil 'move 0 nil 'ar-syntax)))
 
 (put 'lesserangled 'end-op-at
      (lambda ()
-       (end-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "<" ">" nil 'move 0 nil 'ar-syntax)))
 
 (put 'lesserangled 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base "<" ">" nil 'move 0  nil 'ar-syntax t))))
 
 (put 'lesserangled 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base "<" ">" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base "<" ">" nil 'move 0  nil 'ar-syntax t))))
 
 ;; Greaterangled
 (put 'greaterangled 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base ">" "<" nil 'move 0 nil 'ar-syntax)))
 
 (put 'greaterangled 'end-op-at
      (lambda ()
-       (end-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base ">" "<" nil 'move 0 nil 'ar-syntax)))
 
 (put 'greaterangled 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base ">" "<" nil 'move 0  nil 'ar-syntax t))))
 
 (put 'greaterangled 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base ">" "<" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base ">" "<" nil 'move 0  nil 'ar-syntax t))))
 
 ;; Curvedsinglequoted
 (put 'curvedsinglequoted 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "‘" "’" nil 'move 0 nil 'ar-syntax)))
 
 (put 'curvedsinglequoted 'end-op-at
      (lambda ()
-       (end-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "‘" "’" nil 'move 0 nil 'ar-syntax)))
 
 (put 'curvedsinglequoted 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base "‘" "’" nil 'move 0  nil 'ar-syntax t))))
 
 (put 'curvedsinglequoted 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base "‘" "’" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base "‘" "’" nil 'move 0  nil 'ar-syntax t))))
 
 ;; Curveddoublequoted
 (put 'curveddoublequoted 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "“" "”" nil 'move 0 nil 'ar-syntax)))
 
 (put 'curveddoublequoted 'end-op-at
      (lambda ()
-       (end-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "“" "”" nil 'move 0 nil 'ar-syntax)))
 
 (put 'curveddoublequoted 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base "“" "”" nil 'move 0  nil 'ar-syntax t))))
 
 (put 'curveddoublequoted 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base "“" "”" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base "“" "”" nil 'move 0  nil 'ar-syntax t))))
 
 ;; Parentized
 (put 'parentized 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "\(" "\)" nil 'move 0 nil 'ar-syntax)))
 
 (put 'parentized 'end-op-at
      (lambda ()
-       (end-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "\(" "\)" nil 'move 0 nil 'ar-syntax)))
 
 (put 'parentized 'forward-op-at
      (lambda ()
        (unless (eobp)
-         (end-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (end-of-form-base "\(" "\)" nil 'move 0  nil 'ar-syntax t))))
 
 (put 'parentized 'backward-op-at
      (lambda ()
        (unless (bobp)
-         (beginning-of-form-base "\(" "\)" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t))))
+         (beginning-of-form-base "\(" "\)" nil 'move 0  nil 'ar-syntax t))))
 
 ;; Paired delimited forms end
 
@@ -1010,217 +1003,217 @@ XEmacs-users: ‘unibyte’ and ‘multibyte’ class is unused i.e. set to \".\
 ;; Backslashed
 (put 'backslashed 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "\\" "\\" nil 'move 0 nil 'ar-syntax)))
 
 (put 'backslashed 'end-op-at
      (lambda ()
-       (end-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "\\" "\\" nil 'move 0 nil 'ar-syntax)))
 
 (put 'backslashed 'forward-op-at
      (lambda ()
-       (end-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "\\" "\\" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'backslashed 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "\\" "\\" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "\\" "\\" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Backticked
 (put 'backticked 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "`" "`" nil 'move 0 nil 'ar-syntax)))
 
 (put 'backticked 'end-op-at
      (lambda ()
-       (end-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "`" "`" nil 'move 0 nil 'ar-syntax)))
 
 (put 'backticked 'forward-op-at
      (lambda ()
-       (end-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "`" "`" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'backticked 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "`" "`" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "`" "`" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Coloned
 (put 'coloned 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base ":" ":" nil 'move 0 nil 'ar-syntax)))
 
 (put 'coloned 'end-op-at
      (lambda ()
-       (end-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base ":" ":" nil 'move 0 nil 'ar-syntax)))
 
 (put 'coloned 'forward-op-at
      (lambda ()
-       (end-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base ":" ":" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'coloned 'backward-op-at
      (lambda ()
-       (beginning-of-form-base ":" ":" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base ":" ":" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Dollared
 (put 'dollared 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "$" "$" nil 'move 0 nil 'ar-syntax)))
 
 (put 'dollared 'end-op-at
      (lambda ()
-       (end-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "$" "$" nil 'move 0 nil 'ar-syntax)))
 
 (put 'dollared 'forward-op-at
      (lambda ()
-       (end-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "$" "$" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'dollared 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "$" "$" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "$" "$" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Doublequoted
 (put 'doublequoted 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "\"" "\"" nil 'move 0 nil 'ar-syntax)))
 
 (put 'doublequoted 'end-op-at
      (lambda ()
-       (end-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "\"" "\"" nil 'move 0 nil 'ar-syntax)))
 
 (put 'doublequoted 'forward-op-at
      (lambda ()
-       (end-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "\"" "\"" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'doublequoted 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "\"" "\"" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "\"" "\"" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Equalized
 (put 'equalized 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "=" "=" nil 'move 0 nil 'ar-syntax)))
 
 (put 'equalized 'end-op-at
      (lambda ()
-       (end-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "=" "=" nil 'move 0 nil 'ar-syntax)))
 
 (put 'equalized 'forward-op-at
      (lambda ()
-       (end-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "=" "=" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'equalized 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "=" "=" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "=" "=" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Hyphened
 (put 'hyphened 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "-" "-" nil 'move 0 nil 'ar-syntax)))
 
 (put 'hyphened 'end-op-at
      (lambda ()
-       (end-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "-" "-" nil 'move 0 nil 'ar-syntax)))
 
 (put 'hyphened 'forward-op-at
      (lambda ()
-       (end-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "-" "-" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'hyphened 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "-" "-" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "-" "-" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Singlequoted
 (put 'singlequoted 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "'" "'" nil 'move 0 nil 'ar-syntax)))
 
 (put 'singlequoted 'end-op-at
      (lambda ()
-       (end-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "'" "'" nil 'move 0 nil 'ar-syntax)))
 
 (put 'singlequoted 'forward-op-at
      (lambda ()
-       (end-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "'" "'" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'singlequoted 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "'" "'" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "'" "'" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Slashed
 (put 'slashed 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "/" "/" nil 'move 0 nil 'ar-syntax)))
 
 (put 'slashed 'end-op-at
      (lambda ()
-       (end-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "/" "/" nil 'move 0 nil 'ar-syntax)))
 
 (put 'slashed 'forward-op-at
      (lambda ()
-       (end-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "/" "/" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'slashed 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "/" "/" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "/" "/" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Stared
 (put 'stared 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "*" "*" nil 'move 0 nil 'ar-syntax)))
 
 (put 'stared 'end-op-at
      (lambda ()
-       (end-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "*" "*" nil 'move 0 nil 'ar-syntax)))
 
 (put 'stared 'forward-op-at
      (lambda ()
-       (end-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "*" "*" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'stared 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "*" "*" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "*" "*" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Underscored
 (put 'underscored 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "_" "_" nil 'move 0 nil 'ar-syntax)))
 
 (put 'underscored 'end-op-at
      (lambda ()
-       (end-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base "_" "_" nil 'move 0 nil 'ar-syntax)))
 
 (put 'underscored 'forward-op-at
      (lambda ()
-       (end-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base "_" "_" nil 'move 0 nil 'ar-syntax t)))
 
 (put 'underscored 'backward-op-at
      (lambda ()
-       (beginning-of-form-base "_" "_" nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base "_" "_" nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Whitespaced
 (put 'whitespaced 'beginning-op-at
      (lambda ()
-       (beginning-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base " " " " nil 'move 0 nil 'ar-syntax)))
 
 (put 'whitespaced 'end-op-at
      (lambda ()
-       (end-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (end-of-form-base " " " " nil 'move 0 nil 'ar-syntax)))
 
 (put 'whitespaced 'forward-op-at
      (lambda ()
-       (end-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p t)))
+       (end-of-form-base " " " " nil 'move 0 nil 'ar-syntax t)))
 
 (put 'whitespaced 'backward-op-at
      (lambda ()
-       (beginning-of-form-base " " " " nil 'move 0 ar-match-in-comment-p nil 'ar-syntax ar-match-in-string-p)))
+       (beginning-of-form-base " " " " nil 'move 0 nil 'ar-syntax)))
 
 
 ;; Unpaired delimited forms end
@@ -1779,29 +1772,6 @@ Returns final position when called from inside section, nil otherwise"
     (goto-char beg)
     (exchange-point-and-mark)))
 
-(defvar ar-paired-delimited-passiv-raw
-  (list
-   '(braced "{" "}")
-   '(bracketed "[" "]")
-   '(lesserangled "<" ">")
-   '(greaterangled ">" "<")
-   '(curvedsinglequoted "‘" "’")
-   '(parentized "(" ")")))
-
-(defvar ar-unpaired-delimited-raw
-  (list
-   '(backslashed "\\\\")
-   '(backticked "`")
-   '(coloned ":")
-   '(dollared "$")
-   '(doublequoted "\\\"")
-   '(equalized "=")
-   '(hyphened "-")
-   '(singlequoted "'")
-   '(slashed "/")
-   '(stared "*")
-   '(underscored "_")
-   '(whitespaced " ")))
 
 (defvar ar-paired-delimited-passiv-raw
   (list
@@ -2171,5 +2141,5 @@ Returns final position when called from inside section, nil otherwise"
 
 
 
-(provide 'thingatpt-utils-core)
-;;; thingatpt-utils-core.el ends here
+(provide 'ar-thingatpt-utils-core)
+;;; ar-thingatpt-utils-core.el ends here

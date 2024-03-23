@@ -54,17 +54,16 @@ echo "\$IFLOCAL: $IFLOCAL"
 TESTDIR=$PDIR/test
 export TESTDIR
 
-SETUP=$TESTDIR/numbers-at-point-tests.el
+SETUP=${PWD}/test/ar-numbers-at-point-setup-tests.el
 
-FILE1=$WERKSTATT/thingatpt-utils-core/ar-subr.el
-FILE2=$WERKSTATT/thingatpt-utils-core/beg-end.el
-FILE3=$WERKSTATT/thingatpt-utils-core/ar-thingatpt-basic-definitions.el
-FILE4=$WERKSTATT/thingatpt-utils-core/thingatpt-utils-core.el
-FILE5=$WERKSTATT/thing-at-point-utils/thing-at-point-utils.el
-FILE6=$WERKSTATT/numbers-at-point/numbers-at-point.el
+FILE1=${PWD}/ar-subr.el
+FILE2=${PWD}/ar-beg-end.el
+FILE3=${PWD}/ar-thingatpt-basic-definitions.el
+FILE4=${PWD}/ar-thingatpt-utils-core.el
+FILE5=${PWD}/ar-thingatpt-utils.el
+FILE6=${PWD}/ar-numbers-at-point.el
 
-TEST1=test/numbers-at-point-setup-tests.el
-TEST2=test/numbers-at-point-tests.el
+TEST1=test/ar-numbers-at-point-tests.el
 
 if [ -s emacs24 ]; then
     EMACS=emacs24
@@ -101,7 +100,6 @@ hier () {
 -load $SETUP \
 \
 -load $TEST1 \
--load $TEST2 \
 -f ert-run-tests-batch-and-exit
 }
 
@@ -121,6 +119,24 @@ entfernt () {
 }
 
 if [ $IFLOCAL -eq 0 ]; then
+
+    WCO=$HOME/werkstatt/thingatpt-utils-core
+    ATPT=$HOME/werkstatt/thing-at-point-utils
+    WNA=$HOME/werkstatt/numbers-at-point
+
+    cp -p ${WCO}/ar-subr.el ${ATPT}/ar-subr.el
+    cp -p ${WCO}/ar-beg-end.el ${ATPT}/ar-beg-end.el
+    cp -p ${WCO}/ar-thingatpt-utils-core.el ${ATPT}/ar-thingatpt-utils-core.el
+    cp -p ${WCO}/ar-thingatpt-basic-definitions.el ${ATPT}/ar-thingatpt-basic-definitions.el
+    cp -p ${WCO}/test/ar-thingatpt-setup-tests.el ${ATPT}/test/ar-thingatpt-setup-tests.el
+
+    cp -p ${WCO}/ar-subr.el ${WNA}/ar-subr.el
+    cp -p ${WCO}/ar-beg-end.el ${WNA}/ar-beg-end.el
+    cp -p ${WCO}/ar-thingatpt-basic-definitions.el ${WNA}/ar-thingatpt-basic-definitions.el
+    cp -p ${WCO}/ar-thingatpt-utils-core.el ${WNA}/ar-thingatpt-utils-core.el
+    cp -p ${ATPT}/ar-thingatpt-utils.el ${WNA}/ar-thingatpt-utils.el
+    cp -p ${WCO}/test/ar-thingatpt-setup-tests.el ${WNA}/test/ar-thingatpt-setup-tests.el
+
     while getopts 123456789abcdefghijklmnopqrstuvx option
     do
         case $option in
@@ -161,26 +177,4 @@ if [ $IFLOCAL -eq 0 ]; then
     echo "Lade testumgebung \"ENTFERNT\""
     entfernt
 fi
-
-# if [ $ORT -eq 0 ]; then
-
-#     echo "cp -u $HOME/werkstatt/thingatpt-utils-core/ar-subr.el $PWD"
-#     cp -u $HOME/werkstatt/thingatpt-utils-core/ar-subr.el $PWD
-
-#     echo "cp -u $HOME/werkstatt/thingatpt-utils-core/beg-end.el $PWD"
-#     cp -u $HOME/werkstatt/thingatpt-utils-core/beg-end.el $PWD
-
-#     cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-core.el $PWD
-#     echo "cp -u $HOME/werkstatt/thingatpt-utils-core/thingatpt-utils-core.el $PWD"
-
-#     cp -u $HOME/werkstatt/thing-at-point-utils/thing-at-point-utils.el $PWD
-#     echo "cp -u $HOME/werkstatt/thing-at-point-utils/thing-at-point-utils.el $PWD"
-
-#     hier
-
-#     echo "Lade hier"
-# else
-#     echo "Lade entfernt"
-#     entfernt
-# fi
 

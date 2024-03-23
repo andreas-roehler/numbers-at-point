@@ -26,7 +26,47 @@
 
 ;;; Code:
 
-(defvar ar-verbose-p nil)
+(defvar ar-verbose-p nil
+  "Internal use only.")
+
+;; (setq ar-verbose-p t)
+
+(defun ar-toggle-verbose-p ()
+  "Toggle `ar-verbose-p'. "
+  (interactive)
+  (setq ar-verbose-p (not ar-verbose-p))
+  (message "ar-verbose-p: %s"  ar-verbose-p))
+
+(defvar ar-debug-p nil
+  "Switch into test-buffer.")
+
+(defun ar-toggle-debug-p ()
+  "Toggle `ar-debug-p'. "
+  (interactive)
+  (setq ar-debug-p (not ar-debug-p))
+  (message "ar-debug-p: %s"  ar-debug-p))
+
+(defvar ar-keyboard-operator-chars "<>~!@#$^&*_-+=|:;\"',.?"
+  "(Insert known operator chars existing on a qwerty keybord")
+
+(defun ar-insert-keyboard-operator-chars ()
+  (interactive "*")
+  (insert ar-keyboard-operator-chars))
+
+(defun ar-insert-keyboard-operator-char-listing ()
+  (interactive "*")
+  (let* ((chars ar-keyboard-operator-chars)
+         (laenge (length chars)))
+    (insert "(list")
+    (dotimes (i laenge)
+      (insert (concat " ?" (char-to-string (aref chars i)))))
+    (insert ")")
+    (save-excursion
+      (search-backward ";")
+      (insert "\\"))
+    (save-excursion
+      (search-backward "\"")
+      (insert "\\"))))
 
 (defvar ar-line-move-forward t)
 
@@ -36,10 +76,31 @@
 (defvar ar-literal-delim-re "\""
   "When looking at beginning of string.")
 
-(defmacro ar--escaped ()
-  "Return t if char is preceded by an odd number of backslashes."
-  `(save-excursion
-     (< 0 (% (abs (skip-chars-backward "\\\\")) 2))))
+(defalias 'ar-escaped 'ar-escaped-p)
+;; (defmacro ar-escaped-p ()
+;;   "Return t if char is preceded by an odd number of backslashes."
+;;   `(save-excursion
+;;      (< 0 (% (abs (skip-chars-backward "\\\\")) 2))))
+
+(defun ar-escaped-p (&optional pos)
+    "Return t if char at POS is preceded by an odd number of backslashes. "
+    (save-excursion
+      (when pos (goto-char pos))
+      (< 0 (% (abs (skip-chars-backward "\\\\")) 2))))
+
+(defun ar-backslash-escaped-p (&optional pos)
+  "Return t if backslash before point is escaped. "
+  (save-excursion
+    (when pos (goto-char pos))
+    (< 0 (% (abs (skip-chars-backward "\\\\")) 1))))
+
+(defun ar--skip-to-comment-or-semicolon ()
+  "Returns position if point was moved."
+  (let ((orig (point)))
+    (cond ((while (and (< 0 (abs (skip-chars-forward "^#;" (line-end-position))))
+                       ;; (sit-for 1)
+                       (and (nth 8 (parse-partial-sexp (point-min) (point))) (skip-chars-forward "#;" (line-end-position)))))))
+    (and (< orig (point))(point))))
 
 (defmacro ar--preceding-line-backslashed-p ()
   "Return t if preceding line is a backslashed continuation line."
@@ -47,13 +108,19 @@
      (beginning-of-line)
      (skip-chars-backward " \t\r\n\f")
      (and (eq (char-before (point)) ?\\ )
-          (ar-escaped))))
+           (ar-escaped-p))))
+
+(defun ar-nth1-syntax ()
+  "Goto beginning of list at point."
+  )
 
 (defvar ar-strip-chars-before  "\\`[ \t\r\n]*"
-  "Regexp indicating which chars shall be stripped before STRING - which is defined by `string-chars-preserve'.")
+  "Regexp indicating which chars shall be stripped before STRING -
+which is defined by `string-chars-preserve'.")
 
 (defvar ar-strip-chars-after  "[ \t\r\n]*\\'"
-  "Regexp indicating which chars shall be stripped after STRING - which is defined by `string-chars-preserve'.")
+  "Regexp indicating which chars shall be stripped after STRING -
+which is defined by `string-chars-preserve'.")
 
 (defun ar-fix-comment-start ()
   "Comment at point might not have a padding."
@@ -97,7 +164,7 @@ Optional argument LIMIT limit."
      (end-of-line)
      (skip-chars-backward " \t\r\n\f")
      (and (eq (char-before (point)) ?\\ )
-          (ar-escaped))))
+          (ar-escaped-p))))
 
 ;; Comment
 (defun ar--skip-to-comment-or-comma ()
@@ -187,39 +254,26 @@ Optional argument IACT saying interactively called."
 	   (looking-at regexp)
 	 (insert (match-string 1)))))))
 
-(defun ar-forward-comment (&optional pos char)
+(defun ar-forward-comment (&optional pos)
   "Go to end of (next) commented section following point.
 
-Optional args position and ‘comment-start’ character
+Optional args position and `comment-start' character
 Travel empty lines
 Optional argument POS orig.
 Optional argument CHAR comment start."
   (interactive)
   (let ((orig (or pos (point)))
-	(char (or char (string-to-char comment-start)))
-	last)
-    (unless (ar-in-comment-p)
-      (search-forward comment-start nil t 1))
-    (while (and (not (eobp))
-		(forward-comment 99999)))
-    (when (eq (point) orig)
-      ;; forward-comment fails sometimes
-      (while
-	  (and (not (eobp)) (or (ar-in-comment-p)(eq (point) orig)))
-	(setq last (line-end-position))
-	(forward-line 1)
-	(end-of-line)
-	;; (setq orig (point))
-))
-    (and (eq orig (point)) (prog1 (forward-line 1) (back-to-indentation))
-	 (while (member (char-after) (list char 10))(forward-line 1)(back-to-indentation)))
-    ;; go
-    (when last
-      (goto-char last)
-      (skip-chars-forward " \t\r\n\f")
-      (back-to-indentation))
-    (unless (eq (point) orig)
-      (point))))
+	;; (char (or char (string-to-char comment-start)))
+        (pps (parse-partial-sexp (point-min) (point)))
+	)
+    (cond ((nth 8 pps)
+           (goto-char (nth 8 pps))
+           (forward-comment 99999)
+           (unless (eq (point) orig)
+             (point)))
+          (t (search-forward comment-start nil t 1)
+             (ar-forward-comment)))
+    ))
 
 (defun ar-in-comment-p (&optional start)
   "Return the beginning of current line's comment, if inside.
@@ -256,7 +310,6 @@ Otherwise return nil."
   (interactive)
   (let* ((pps (parse-partial-sexp (point-min) (point)))
 	 (erg (and (nth 3 pps) (nth 8 pps)))
-	 (orig (point))
 	 (la (unless (or erg (eobp))
 	       (and (eq (char-syntax (char-after)) 34)
 		    ;; look for closing char
@@ -264,7 +317,6 @@ Otherwise return nil."
 		      (forward-char 1)
 		      (nth 3 (parse-partial-sexp (point-min) (point))))
 		    (point)))))
-    (when (interactive-p) (message "%s" (or erg la)))
     (or erg la)))
 
 (defun ar-in-string-p-fast ()
@@ -308,30 +360,6 @@ With negative arg go backward. "
         (goto-char (or (and pps (nth 4 pps))(ar-comment-beginning-position-atpt))))
       (> orig (point)))))
 
-(defun ar-forward-sexp ()
-  "Like ‘forward-sexp’, diffs below.
-
-From inside string go to end-of-string.
-From inside comment, go to end-of-comment.
-
-At the end of sexp-same-level, go up if possible.
-Otherwise return nil."
-  (interactive)
-  (let ((orig (point))
-	(pps (parse-partial-sexp (point-min) (point)))
-	erg)
-    (cond ((nth 3 pps)
-	   (goto-char (nth 8 pps))
-	   (forward-sexp))
-	  ((or (nth 4 pps)(eq (car (syntax-after (point))) 11))
-	   (when (ar-skip-blanks-and-comments nil pps)
-	     (ar-forward-sexp)))
-	  (t (or (progn (ignore-errors (forward-sexp))
-			(< orig (point)))
-		 (ignore-errors (up-list)))))
-    (when (< orig (point)) (setq erg (point)))
-    erg))
-
 (defun ar-backward-line ()
   "Go to indentation of current source-code line.
 
@@ -340,7 +368,7 @@ Skip comments, empty lines and strings"
   (interactive)
   (unless (bobp)
     (let ((orig (point))
-	  cmm pps)
+	  cmm)
       (back-to-indentation)
       (while (and (eolp) (not (bobp)))
 	(forward-line -1))
@@ -350,9 +378,9 @@ Skip comments, empty lines and strings"
 	(cond (cmm
 	       (ar-backward-comment)
 	       (ar-backward-line))
-	      ((nth 3 pps)
+	      ((nth 3 (parse-partial-sexp (point-min) (point)))
 	       ;; beginning of string
-	       (goto-char (nth 8 pps)))))
+	       (goto-char (nth 8 (parse-partial-sexp (point-min) (point)))))))
       (back-to-indentation)
       (when (or (eq (car (syntax-after (point))) 11)(eolp))(ar-backward-line)))))
 
@@ -502,26 +530,23 @@ Optional argument RIGHT border."
   "Search backward next regexp not in string or comment.
 
 Return and move to match-beginning if successful"
-  (let (last)
-    (while (and
-	    (re-search-backward regexp nil 'move 1)
-	    (setq last (point))
-	    (or (nth 8 (parse-partial-sexp (point-min) (point)))
-		(and indent
-		     (not (funcall condition (current-indentation) indent))))))
-    (unless (bobp)
-      (back-to-indentation)
-      (point))))
+  (while (and
+	  (re-search-backward regexp nil 'move 1)
+	  ;; (setq last (point))
+	  (or (nth 8 (parse-partial-sexp (point-min) (point)))
+	      (and indent
+		   (not (funcall condition (current-indentation) indent))))))
+  (unless (bobp)
+    (back-to-indentation)
+    (point)))
 
 (defun ar-check-parens ()
-  "Like ‘check-parens’ but avoid error.
+  "Like `check-parens' but avoid error.
 
 Just return t if parentheses in the current buffer are balanced.
 Return nil if not."
   (interactive)
-  (let (erg)
-      (setq erg (scan-sexps (point-min) (point-max)))))
-
+  (scan-sexps (point-min) (point-max)))
 
 (defun ar-backward-defun-DWIM (&optional outmost pps)
   "A fault-tolerant backward-function command.
@@ -541,13 +566,13 @@ When `beginning-of-defun-function' is set, call with optional ARG
 
 If no function found inside a list, go to list-start.
 Otherwise reach next list upward in buffer
-Optional argument PPS result of ‘parse-partial-sexp’."
+Optional argument PPS result of `parse-partial-sexp'."
   (interactive "P")
   (unless (bobp)
   (let* ((outmost (or outmost (eq 4 (prefix-numeric-value outmost))))
 	 (pps (or pps (parse-partial-sexp (point-min) (point))))
 	 (liststart (or (and (bobp) (point))(nth 1 pps)))
-	 (orig (point)))
+	 )
     (cond
      ((and (not liststart)(looking-at ar-beginning-of-defun-re))
       (unless (bobp) (skip-chars-backward " \t\r\n\f")
@@ -604,7 +629,7 @@ When `end-of-defun-function' is set, call it with optional ARG"
     (let* ((orig (point)))
       (ar-beginning-of-defun)
       (when (< (point) orig)
-        (when (interactive-p) (message "%s" (point)))
+        (when ar-verbose-p (message "%s" (point)))
         (point)
         ))))
 
@@ -616,7 +641,7 @@ When `end-of-defun-function' is set, call it with optional ARG"
     (let ((orig (point)))
       (ar-end-of-defun)
       (when (< orig (point))
-        (when (interactive-p) (message "%s" (point)))
+        (when ar-verbose-p  (message "%s" (point)))
         (point)))))
 
 (defun ar-count-lines (&optional beg end)
@@ -639,7 +664,7 @@ Optional argument END end."
   "Return a list of indentations up to start of toplevel."
   (save-excursion
     (let ((beg (save-excursion (ar-backward-toplevel)))
-	  ilist)
+	  (ilist nil))
       (save-restriction
 	(narrow-to-region beg (point))
 	(while (ar-backward-statement)
@@ -672,15 +697,18 @@ otherwise return complement char"
 (defun ar--return-complement-char-maybe (char)
   "Reverse reciproke CHARs as \"[\" to \"]\"."
   (pcase char
+    ;; ‘M-x append-to-register <RET> R’ can use ‘C-x r +’
     (?+ ?-)
     (?- ?+)
-    (92 47)
-    (47 92)
+    (?» ?«)
+    ;; (92 47)
+    ;; (47 92)
     ;; (?' ?\")
     ;; (?\" ?')
     (?‘ ?’)
-    (?` ?´)
-    (?´ ?`)
+    ;; backticked is needed
+    (?` ?`)
+    ;; (?´ ?`)
     (?< ?>)
     (?> ?<)
     (?\( ?\))
@@ -804,8 +832,14 @@ otherwise return complement char"
     (?\⦈ ?\⦇)
     (_ char)))
 
+(defvar ar-closing-chars (list ?’  ?´  ?\]  ?}  ?\〉  ?\⦒  ?\⦔  ?\】  ?\⦘  ?\⸥  ?\」  ?\》  ?\⦖  ?\⸩  ?\⧛  ?\｝  ?\）  ?\］  ?\｠  ?\｣  ?\❱  ?\❯  ?\”  ?\❳  ?\⟩  ?\⟫  ?\⟯  ?\⟧  ?\⟭  ?\❵  ?\❫  ?\❩  ?\❭  ?\᚜  ?\〉  ?\⧽  ?\⟆  ?\⸧  ?\﹜  ?\﹚  ?\﹞  ?\⁆  ?\⦎  ?\⦐  ?\⦌  ?\₎  ?\⁾  ?\༽  ?\༻  ?\⸣  ?\〕  ?\』  ?\⦄  ?\〗  ?\⦆  ?\〛  ?\〙  ?\⧙  ?\⦊  ?\⦈  )
+  "List of closing delimiters.")
+
+(defvar ar-curly-braces-syntax-control-modes (list 'scala-mode 'java-mode)
+  "Internal use only.")
+
 (defun ar-align-with-previous-line-maybe ()
-  (when (and (eq this-command self-insert-command)
+  (when (and (eq this-command 'self-insert-command)
 	     (eq (char-before) ?=))
     (ar-align-with-previous-line (current-column))))
 
@@ -876,6 +910,202 @@ Argument ORIG start."
     (skip-chars-backward " \t\r\n\f")
     (current-indentation)))
 
+(defun ar-backward-statement (&optional orig done limit ignore-in-string-p repeat maxindent)
+  "Go to the initial line of a simple statement.
+
+For beginning of compound statement use `ar-backward-block'.
+For beginning of clause `ar-backward-clause'.
+
+`ignore-in-string-p' allows moves inside a docstring, used when
+computing indents
+ORIG - consider orignial position or point.
+DONE - transaktional argument
+LIMIT - honor limit
+IGNORE-IN-STRING-P - also much inside a string
+REPEAT - count and consider repeats
+Optional MAXINDENT: don't stop if indentation is larger"
+  (interactive)
+  (save-restriction
+    (unless (bobp)
+      (let* ((repeat (or (and repeat (1+ repeat)) 0))
+	     (orig (or orig (point)))
+             (pps (parse-partial-sexp (or limit (point-min))(point)))
+             (done done)
+             erg)
+	;; lp:1382788
+	(unless done
+	  (and (< 0 (abs (skip-chars-backward " \t\r\n\f")))
+ 	       (setq pps (parse-partial-sexp (or limit (point-min))(point)))))
+        (cond
+	 ((< ar-max-specpdl-size repeat)
+	  (error "Py-forward-statement reached loops max. If no error, customize `ar-max-specpdl-size'"))
+         ((and (bolp) (eolp))
+          (skip-chars-backward " \t\r\n\f")
+          (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ;; inside string
+         ((and (nth 3 pps) (not ignore-in-string-p))
+	  (setq done t)
+	  (goto-char (nth 8 pps))
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ((nth 4 pps)
+	  (while (ignore-errors (goto-char (nth 8 pps)))
+	    (skip-chars-backward " \t\r\n\f")
+	    (setq pps (parse-partial-sexp (line-beginning-position) (point))))
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+         ((and (nth 1 pps) (not (member major-mode ar-curly-braces-syntax-control-modes)))
+          (goto-char (1- (nth 1 pps)))
+	  (when (ar--skip-to-semicolon-backward (save-excursion (back-to-indentation) (point)))
+	    (setq done t))
+          (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+         ((ar-preceding-line-backslashed-p)
+          (forward-line -1)
+          (back-to-indentation)
+          (setq done t)
+          (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ;; at raw-string
+	 ;; (and (looking-at "\"\"\"\\|'''") (member (char-before) (list ?u ?U ?r ?R)))
+	 ((and (looking-at "\"\"\"\\|'''") (member (char-before) (list ?u ?U ?r ?R)))
+	  (forward-char -1)
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ;; BOL or at space before comment
+         ((and (looking-at "[ \t]*#") (looking-back "^[ \t]*" (line-beginning-position)))
+          (forward-comment -1)
+          (while (and (not (bobp)) (looking-at "[ \t]*#") (looking-back "^[ \t]*" (line-beginning-position)))
+            (forward-comment -1))
+          (unless (bobp)
+            (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent)))
+	 ;; at inline comment
+         ((looking-at "[ \t]*#")
+	  (when (ar--skip-to-semicolon-backward (save-excursion (back-to-indentation) (point)))
+	    (setq done t))
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ;; at beginning of string
+	 ((looking-at ar-string-delim-re)
+	  (when (< 0 (abs (skip-chars-backward " \t\r\n\f")))
+	    (setq done t))
+	  (back-to-indentation)
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ;; after end of statement
+	 ((and (not done) (eq (char-before) ?\;))
+	  (skip-chars-backward ";")
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ;; travel until indentation or semicolon
+	 ((and (not done) (ar--skip-to-semicolon-backward))
+	  (unless (and maxindent (< maxindent (current-indentation)))
+	    (setq done t))
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ;; at current indent
+	 ((and (not done) (not (eq 0 (skip-chars-backward " \t\r\n\f"))))
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent))
+	 ((and maxindent (< maxindent (current-indentation)))
+	  (forward-line -1)
+	  (ar-backward-statement orig done limit ignore-in-string-p repeat maxindent)))
+	;; return nil when before comment
+	(unless (and (looking-at "[ \t]*#") (looking-back "^[ \t]*" (line-beginning-position)))
+	  (when (< (point) orig)(setq erg (point))))
+	erg))))
+
+(defun ar-forward-statement (&optional orig done repeat)
+  "Go to the last char of current statement.
+
+Optional argument REPEAT, the number of loops DONE already,
+is checked for ‘ar-max-specpdl-size’ error.
+Avoid eternal loops due to missing string delimters etc.
+Optional argument ORIG Position."
+  (interactive)
+  (unless (eobp)
+    (let ((repeat (or (and repeat (1+ repeat)) 0))
+          (orig (or orig (point)))
+          erg
+          ;; use by scan-lists
+          parse-sexp-ignore-comments
+          forward-sexp-function
+          pps)
+      (setq pps (parse-partial-sexp (point-min) (point)))
+      ;; (origline (or origline (ar-count-lines)))
+      (cond
+       ((< ar-max-specpdl-size repeat)
+        (error "Ar-forward-statement reached loops max.
+If no error, customize `ar-max-specpdl-size'"))
+       ;; string
+       ((or (nth 3 pps)(eq (char-syntax (char-after)) 34))
+        (when (ar-end-of-string)
+          (end-of-line)
+          (skip-chars-backward " \t\r\n\f")
+          (setq pps (parse-partial-sexp (point-min) (point)))
+          (unless (and done
+                       (not (or (nth 1 pps) (nth 8 pps)))
+                       (eolp))
+            (ar-forward-statement orig done repeat))))
+       ;; in comment
+       ((or (nth 4 pps)(eq (char-syntax (char-after)) ?<))
+	(ar-forward-comment)
+        (ar-forward-statement orig done repeat))
+       ((ar--current-line-backslashed-p)
+        (end-of-line)
+        (skip-chars-backward " \t\r\n\f" (line-beginning-position))
+        (while (and (eq (char-before (point)) ?\\ )
+                    (ar-escaped-p))
+          (forward-line 1)
+          (end-of-line)
+          (skip-chars-backward " \t\r\n\f" (line-beginning-position)))
+        (unless (eobp)
+          (ar-forward-statement orig done repeat)))
+       ((eq orig (point))
+        (or (and
+	     (< 0 (abs (skip-chars-forward (concat " \t\r\n\f'\"" comment-start))))
+	     (eolp) (setq done t))
+	    (end-of-line)
+	    (skip-chars-backward " \t\r\n\f$"))
+        (ar-forward-statement orig done repeat))
+       ((eq (current-indentation) (current-column))
+	(end-of-line)
+	(skip-chars-backward " \t\r\n\f")
+	(setq done t)
+	(ar-forward-statement orig done repeat))
+       ;; list
+       ((nth 1 pps)
+	(unless done
+	  (goto-char (nth 1 pps))
+	  (ignore-errors (forward-sexp))
+	  (setq done t)
+	  (ar-forward-statement orig done repeat))))
+      (unless
+	  (or
+	   (eq (point) orig)
+	   (member (char-before) (list 10 32 9)))
+	(setq erg (point)))
+	(and ar-verbose-p (called-interactively-p 'any) (message "%s" erg))
+      erg)))
+
+(defun ar--beginning-of-expression-p ()
+  "Return position, if cursor is at the beginning of a `expression'.
+
+Return nil otherwise.
+Argument ORIG Position.
+Argument PPS result of ‘parse-partial-sexp’."
+  (let ((orig (point))
+        erg)
+    (or ;; (and pps (setq erg (eq 0 (nth 0 pps))))
+	(save-excursion
+	  (unless (and (eolp)(bolp))
+	    (ar-forward-statement)
+	    (ar-backward-statement))
+	  (when (eq orig (point))
+	    (setq erg orig))
+	  erg))))
+
+(defun ar--end-of-expression-p ()
+  "Return position, if cursor is at the end of a expression, nil otherwise."
+  (let ((orig (point))
+	erg)
+    (save-excursion
+      (ar-backward-statement)
+      (ar-forward-statement)
+      (when (eq orig (point))
+	(setq erg orig))
+      erg)))
+
 (defun ar-backward-toplevel (&optional arg)
   "Go to beginning of a toplevel form.
 
@@ -904,12 +1134,12 @@ Optional argument ARG times"
 	(beginning-of-line))
       (when (< (point) orig)
 	(setq erg (point))
-	(when (interactive-p) (message "%s" erg)))
+	(when ar-verbose-p (message "%s" erg)))
       erg)))
 
 (defun ar--forward-toplevel-intern (orig pps)
   (let (last)
-    (unless (ar--beginning-of-expression-p orig pps)
+    (unless (ar--beginning-of-expression-p)
       (ar-backward-expression))
     (unless (eq 0 (current-column))
       (ar-backward-toplevel))
@@ -974,7 +1204,7 @@ Optional argument ARG times."
       ;; 	(ar-forward-toplevel)))
       (when (< orig (point))
 	(setq erg (point))
-	(when (and ar-verbose-p (interactive-p)) (message "%s" erg)))
+	(when ar-verbose-p (message "%s" erg)))
       erg)))
 
 (defun ar-forward-toplevel-bol ()
@@ -992,11 +1222,11 @@ Returns position if successful, nil otherwise"
 	  (beginning-of-line)))
       (when (< orig (point))
 	(setq erg (point))))
-    (when (and ar-verbose-p (interactive-p)) (message "%s" erg))
+    (when ar-verbose-p (message "%s" erg))
     erg))
 
 (defun ar-reverse-at-point (&optional beg end)
-  "Replace a string or region at point by result of ‘reverse’.
+  "Replace a string or region at point by result of `reverse'.
 
 Works at any string detected at position, unless
 optional BEG as start and
@@ -1084,6 +1314,144 @@ unless not already there"
 	       (backward-up-list)
 	       (delete-region (point) (scan-sexps (point) 1))
 	       (insert expr))))))
+
+(defun ar-align-equal-sign ()
+  (interactive "*")
+  (when (eq this-command 'self-insert-command)
+    (save-excursion
+      (let ((end (copy-marker (line-end-position)))
+            (secondcolumn (and (looking-back "[^=]+\\(=\\) *" (line-beginning-position))
+                               ;; (member (char-after) (list 32 ?\n ?\t ?\f))
+                               ;;  haskell
+                               (not (looking-back "main +\\(=+\\) *" (line-beginning-position)))
+                               (goto-char (match-beginning 1))
+                               (current-column)))
+            (maxcolumn 0)
+            orig)
+        ;; an equal-sign at current line
+        (when secondcolumn
+          ;; (put 'secondcolumn 'pos (point))
+          (setq maxcolumn secondcolumn)
+          (setq orig (point))
+          (while
+              (and (progn (beginning-of-line)
+                          (not (bobp)))
+                   (progn (forward-line -1)
+                          (not (looking-at comment-start)))
+                   (looking-at ".+ +\\(=\\)[[:blank:]]+.*"))
+            (when (match-beginning 1)(goto-char (match-beginning 1)))
+            (when (< maxcolumn (current-column))
+              (setq maxcolumn (current-column))))
+          ;; before going downward, reach the last match
+          (when (match-beginning 1)(goto-char (match-beginning 1)))
+          (while (< (line-end-position) end)
+            (when (looking-at ".+ +\\(=\\)[[:blank:]]+.*")
+              (goto-char (match-beginning 1)))
+            (when (< (current-column) maxcolumn)
+              (insert (make-string (- maxcolumn (current-column)) 32)))
+            (forward-line 1)
+            )
+          (goto-char orig)
+          (when (looking-at " *\\(=\\)[[:blank:]]*")
+            (when (< (current-column) maxcolumn)
+              (insert (make-string (- maxcolumn (current-column)) 32))))
+          )))))
+
+(defun ar-align-in-current-buffer ()
+  (interactive)
+  (add-hook 'post-command-hook #'ar-align-equal-sign nil t))
+
+(defun ar-in-string-or-comment-p ()
+  "If inside or at beginning of a string or comment."
+  (interactive)
+  (or (nth 8 (parse-partial-sexp (point-min) (point)))
+      (ignore-errors (eq 7 (car-safe (syntax-after (point)))))
+      (ignore-errors (looking-at comment-start))
+      (ignore-errors (looking-at comment-start-skip))))
+
+(defun ar-in-string-comment-or-escaped (&optional pps permit-comment permit-string)
+  "Check for matches inside a string, a comment or at escaped char.
+
+Optional PERMIT-COMMENT: match inside a comment.
+Optional PERMIT-STRING: match inside a string."
+  (let ((pps (or pps (parse-partial-sexp (point-min) (point)))))
+    (or (and (nth 4 pps) (not permit-comment))
+        (and (nth 3 pps) (not permit-string))
+        (ar-escaped-p))))
+
+(defun ar-narrow-to-comment-atpt ()
+  (interactive)
+  (let ((pps (parse-partial-sexp (point-min) (point))))
+    (when (nth 4 pps)
+      (ar-backward-comment)
+      (set-mark (point))
+      (ar-forward-comment)
+      (narrow-to-region (mark) (point)))))
+
+(defun ar-narrow-to-string-atpt ()
+  (interactive)
+  (let ((pps (parse-partial-sexp (point-min) (point))))
+    (set-mark (goto-char (nth 8 pps)))
+    (forward-sexp)
+    (narrow-to-region (mark) (point))))
+
+(defun ar-buffer-narrowed-p ()
+  "Returns a list, beg and end position of accessible buffer,
+if narrowed, nil otherwise. "
+  (interactive)
+  (let* ((beg (point-min))
+         (end (point-max))
+         (erg (/= (buffer-size)
+                  (- end
+                     beg))))
+    (when (called-interactively-p 'any)
+      (if erg
+          (message "%s" (list beg end))
+        (message "erg: %s" erg)))
+    (and erg (list beg end))))
+
+(unless (functionp 'pos-bol)
+  (defun pos-bol ()
+    "Provide lisp ‘pos-bol’ for Emacs version < 29
+
+For Emacs version > 28:
+
+pos-bol is a built-in function in ‘src/editfns.c’.
+
+(pos-bol &optional N)
+
+Return the position of the first character on the current line.
+With optional argument N, scan forward N - 1 lines first.
+If the scan reaches the end of the buffer, return that position.
+
+This function ignores text display directionality; it returns the
+position of the first character in logical order, i.e. the smallest
+character position on the logical line.  See ‘vertical-motion’ for
+movement by screen lines.
+
+This function does not move point.  Also see ‘line-beginning-position’.
+
+  Other relevant functions are documented in the buffer group.
+  Probably introduced at or before Emacs version 29.1.
+  This function does not change global state, including the match data.
+"
+    (interactive)
+    (save-match-data
+      (save-excursion
+        (and comint-last-prompt
+             (goto-char (or (cdr-safe comint-last-prompt) (car comint-last-prompt)))
+             (progn (forward-line -1)
+                    (end-of-line)
+                    (forward-char 1)
+                    (point)))))))
+
+(defmacro ar-preceding-line-backslashed-p ()
+  "Return t if preceding line is a backslashed continuation line. "
+  `(save-excursion
+     (beginning-of-line)
+     (skip-chars-backward " \t\r\n\f")
+     (and (eq (char-before (point)) ?\\ )
+          (ar-escaped))))
 
 (provide 'ar-subr)
 ;;; ar-subr.el ends here
