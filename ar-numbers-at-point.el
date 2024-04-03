@@ -30,10 +30,10 @@
 
 ;;; Code:
 
-(require 'ar-subr)
-(require 'ar-beg-end)
-(require 'ar-thingatpt-utils-core)
-(require 'ar-thingatpt-utils)
+(unless (featurep 'ar-subr) (require 'ar-subr))
+(unless (featurep 'ar-beg-end) (require 'ar-beg-end))
+(unless (featurep 'ar-thingatpt-utils-core) (require 'ar-thingatpt-utils-core))
+(unless (featurep 'ar-thingatpt-utils) (require 'ar-thingatpt-utils))
 
 (defun ar-add-to-integer-and-forward (&optional step)
   (interactive "p*")
