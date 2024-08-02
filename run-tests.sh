@@ -18,8 +18,9 @@
 
 # Code:
 
-
-if [ $1 == e25 ]; then
+if [ $1 == en ]; then
+    export EMACS=$(echo $(alias $1) | sed "s,alias [^~]*.\([^ ]*\).*,$HOME\1,g")
+elif [ $1 == e25 ]; then
     export EMACS=$(echo $(alias $1) | sed "s,alias [^~]*.\([^ ]*\).*,$HOME\1,g")
 elif
     [ $1 == e26 ];then
