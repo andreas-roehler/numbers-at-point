@@ -121,12 +121,13 @@ entfernt () {
 
 if [ $IFLOCAL -eq 0 ]; then
 
+    WGE=$HOME/werkstatt/emacs-generics
     WCO=$HOME/werkstatt/thingatpt-utils-core
     ATPT=$HOME/werkstatt/thing-at-point-utils
     WNA=$HOME/werkstatt/numbers-at-point
 
-    cp -p ${WCO}/ar-subr.el .
-    cp -p ${WCO}/ar-beg-end.el .
+    cp -p ${WGE}/ar-subr.el .
+    cp -p ${WGE}/ar-beg-end.el .
     cp -p ${WCO}/ar-thingatpt-basic-definitions.el .
     cp -p ${WCO}/ar-thingatpt-utils-core.el .
     cp -p ${ATPT}/ar-thingatpt-utils.el .
