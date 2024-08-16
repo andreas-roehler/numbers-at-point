@@ -145,7 +145,7 @@ If arg SYMBOL is a string, raise according to value"
 
 (defalias 'ar-add-to-number 'ar-shift-atpt)
 (defun ar-shift-atpt (&optional step iact)
-  "Shift integer at point according to STEP.
+  "Shift integer or alphabetical char at point according to STEP.
 
 Default is 1
 
@@ -173,47 +173,16 @@ Shift \"y\" to \"a\".
 	         (when erg
 	           (setq newval (char-to-string erg))
 	           (ar-replace-atpt newval beg end "s"))))
-      (error "Not a number"))))
+      ;; Raise or decrease alphabetical chars
+      (if (< step 0)
+          (setq erg (ar--shift-symbol-down (char-after)))
+        (setq erg (ar--shift-symbol-up (char-after))))
+      (delete-char 1)
+      (insert (char-to-string erg))
+      ;; (error "Not a number")
+      )))
 
 ;; (defalias 'ar-raise-in-region-maybe 'ar-raise-numbers-in-region)
-
-(defun ar-raise-in-region-maybe (&optional step beg end)
-  "With use-region-p raise/decrease integers in region.
-
-Call `ar-shift-atpt' otherwise
-Numbers are raised if STEP is positive, decreased otherwise"
-  (interactive "p")
-  (cond ((use-region-p)
-	 (ar-with-integers-in-region-maybe 'ar-shift-atpt step (region-beginning) (region-end)))
-	((and beg end)
-	 (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end))
-	(t (ar-shift-atpt step))))
-;; (setq mark-active t)
-;; (exchange-point-and-mark)
-;; (push-mark (point) t)
-;; (goto-char (point-max))
-;; (setq transient-mark-mode t))
-
-(defalias 'ar-decrease-in-region-maybe 'ar-decrease-numbers-in-region-maybe)
-(defun ar-decrease-in-region-maybe (&optional step beg end)
-  "Decrease integers at point according to STEP.
-
-Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
-
-Default is 1"
-  (interactive "*p")
-  (let ((step (or step 1))
-	(beg (or beg (and (use-region-p) (region-beginning))))
-	(end (or end (and (use-region-p) (region-end)))))
-    (ar-raise-in-region-maybe (- step) beg end)))
-
-(defun ar-raise-kummulative-maybe (&optional step beg end)
-  "With use-region-p raise/decrease integers in region.
-
-Call `ar-shift-atpt' otherwise
-Numbers are raised adding one STEP to STEP each, if STEP is positive, decreased otherwise"
-  (interactive "p")
-  (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end t))
 
 (defun ar-with-integers-in-region-maybe (command &optional step beg end cummulative)
   "With use-region-p raise/decrease integers in region.
@@ -259,6 +228,101 @@ Numbers are raised if STEP is positive, decreased otherwise"
     ;; (set-mark old-mark)
     ;; (exchange-point-and-mark)
 	    ))
+
+(defun ar-shift-chars-in-region-maybe (command &optional step beg end cummulative)
+  "With use-region-p raise/decrease chars in region.
+
+Raise integers infinitely.
+Circle alphabetic chars.
+
+Call `ar-shift-atpt' otherwise
+Numbers are raised if STEP is positive, decreased otherwise"
+  (interactive "p")
+  ;; (window-configuration-to-register 313465892)
+  (let ((old-mark (mark))
+	(step (or step 1))
+	(count step)
+	(beg (cond (beg)
+		   ((use-region-p)
+		    (region-beginning))))
+	(end (cond (end)
+		   ((use-region-p)
+		    (copy-marker (region-end))))))
+    (save-excursion
+      (if
+	  (and beg end)
+	  (save-restriction
+	    (narrow-to-region beg end)
+	    (goto-char (point-min))
+	    (unless (ar-number-atpt)(ar-forward-number-atpt))
+	    (while (and
+		    (prog1
+			;; (ar-shift-atpt step)
+			(funcall command count)
+		      (forward-char 1))
+		    (ar-forward-number-atpt)
+		    (progn
+		      (when cummulative (setq count (+ count step)))
+		      (not (eobp)))))
+	    ;; (goto-char beg)
+	    ;; (push-mark (point) t)
+	    ;; (goto-char end)
+	    ;; (setq transient-mark-mode t)
+	    ;; (exchange-point-and-mark)
+	    )
+	;; (ar-shift-atpt step)
+	(funcall command step)))
+    ;; (jump-to-register 313465892)
+    ;; (set-mark old-mark)
+    ;; (exchange-point-and-mark)
+	    ))
+
+(defun ar-raise-in-region-maybe (&optional step beg end)
+  "With use-region-p raise/decrease integers in region.
+
+Call `ar-shift-atpt' otherwise
+Numbers are raised if STEP is positive, decreased otherwise"
+  (interactive "p")
+  (cond ((use-region-p)
+	 (ar-with-integers-in-region-maybe 'ar-shift-atpt step (region-beginning) (region-end)))
+	((and beg end)
+	 (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end))
+        ((and (or (eq (char-after) 32) (eolp))(member (char-before) (list ?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9)))
+         (save-excursion
+           (backward-char)
+           (ar-shift-atpt step)))
+	(t (ar-shift-atpt step))))
+
+;; (setq mark-active t)
+;; (exchange-point-and-mark)
+;; (push-mark (point) t)
+;; (goto-char (point-max))
+;; (setq transient-mark-mode t))
+
+(defalias 'ar-decrease-in-region-maybe 'ar-decrease-numbers-in-region-maybe)
+(defun ar-decrease-in-region-maybe (&optional step beg end)
+  "Decrease integers at point according to STEP.
+
+Shift chars, \"b\" \"a\" resp. \"y\" to \"a\".
+
+Default is 1"
+  (interactive "*p")
+  (let ((step (or step 1))
+	(beg (or beg (and (use-region-p) (region-beginning))))
+	(end (or end (and (use-region-p) (region-end)))))
+    (ar-raise-in-region-maybe (- step) beg end)))
+
+(defun ar-raise-kummulative-maybe (&optional step beg end)
+  "With use-region-p raise/decrease integers in region.
+
+Call `ar-shift-atpt' otherwise
+Numbers are raised adding one STEP to STEP each, if STEP is positive, decreased otherwise"
+  (interactive "p")
+  (ar-with-integers-in-region-maybe 'ar-shift-atpt step beg end t))
+
+
+
+
 
 (provide 'ar-numbers-at-point)
 ;;; ar-numbers-at-point.el ends her

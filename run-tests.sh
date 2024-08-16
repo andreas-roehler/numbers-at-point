@@ -55,7 +55,7 @@ echo "\$IFLOCAL: $IFLOCAL"
 TESTDIR=$PDIR/test
 export TESTDIR
 
-SETUP=${PWD}/test/ar-numbers-at-point-setup-tests.el
+SETUP=${TESTDIR}/ar-thingatpt-setup-tests.el
 
 FILE1=${PWD}/ar-subr.el
 FILE2=${PWD}/ar-beg-end.el
@@ -65,6 +65,7 @@ FILE5=${PWD}/ar-thingatpt-utils.el
 FILE6=${PWD}/ar-numbers-at-point.el
 
 TEST1=test/ar-numbers-at-point-tests.el
+TEST2=test/ar-alphabetical-at-point-tests.el
 
 if [ -s emacs24 ]; then
     EMACS=emacs24
@@ -89,6 +90,21 @@ h1 () {
 -f ert-run-tests-batch-and-exit
 }
 
+h2 () {
+    $EMACS -Q --batch \
+--eval "(message (emacs-version))" \
+-load $FILE1 \
+-load $FILE2 \
+-load $FILE3 \
+-load $FILE4 \
+-load $FILE5 \
+-load $FILE6 \
+-load $SETUP \
+\
+-load $TEST2 \
+-f ert-run-tests-batch-and-exit
+}
+
 hier () {
     $EMACS -Q --batch \
 --eval "(message (emacs-version))" \
@@ -101,6 +117,7 @@ hier () {
 -load $SETUP \
 \
 -load $TEST1 \
+-load $TEST2 \
 -f ert-run-tests-batch-and-exit
 }
 
@@ -131,6 +148,7 @@ if [ $IFLOCAL -eq 0 ]; then
     cp -p ${WCO}/ar-thingatpt-basic-definitions.el .
     cp -p ${WCO}/ar-thingatpt-utils-core.el .
     cp -p ${ATPT}/ar-thingatpt-utils.el .
+    cp -p ${WCO}/test/ar-thingatpt-setup-tests.el .
 
     while getopts 123456789abcdefghijklmnopqrstuvx option
     do
