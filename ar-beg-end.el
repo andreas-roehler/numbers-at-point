@@ -134,7 +134,9 @@ Default is t, escaped characters don't match."
   "Check for contradiction, return t if it fails.
 
   FLAG: if moving forward or backward"
-  (unless (or (bobp) (ignore-errors (eq (car-safe (syntax-after (point))) 7)))
+  (unless (or (bobp)
+              ;; (ignore-errors (eq (car-safe (syntax-after (point))) 7))
+              )
     (let* ((pps (save-excursion (parse-partial-sexp (point-min) pos
                                                     ;; (if (eq flag 'beg) (1+ pos) pos)
                                                     ))))
@@ -157,19 +159,19 @@ Default is t, escaped characters don't match."
             )
        (and (not (nth 3 pps))
             match-in-string
+            (not (eq (car (syntax-after (point))) 7))  
             )
        (and (nth 3 pps)
             (not match-in-string)
-            )
-         ))))
+            )))))
 
 (defun beginning-of-form-core (begstr endstr regexp nesting condition searchform bound noerror match-in-comment match-in-string orig)
   (let* ((form (if regexp 're-search-backward 'search-backward))
          (nesting (or nesting 0))
          first)
     (while
-        (and (not (bobp)) (or (< 0 nesting) (not first)))
-      (funcall form searchform bound noerror)
+        (and (not (bobp)) (or (< 0 nesting) (not first))
+             (funcall form searchform bound noerror))
       (setq last (point))
       (unless
           (beg-end--related-exceptions match-in-comment match-in-string (point) 'beg)
@@ -177,9 +179,8 @@ Default is t, escaped characters don't match."
         ;; doublequoted starts either right behind closer or must travel some distanz
         (cond ((string= begstr endstr)
                (if (< (point) orig) ;; (not first)
-                 (setq nesting (1- nesting))
-                   (setq nesting (1+ nesting))
-                 )
+                   (setq nesting (1- nesting))
+                 (setq nesting (1+ nesting)))
                (setq first t))
               ((looking-at (beg-end-regexp-quote-maybe begstr))
                (setq nesting (1- nesting))
@@ -235,7 +236,7 @@ when starting from behind unary delimiters like single-quotes"
             (progn
               (beginning-of-form-core begstr endstr regexp nesting condition searchform bound noerror match-in-comment match-in-string orig)
               (setq condition nil))
-          (setq first t) 
+          (setq first t)
         (setq nesting (beginning-of-form-core begstr endstr regexp nesting condition searchform bound noerror match-in-comment match-in-string orig))))
       (cond
        ((<= (point) orig)

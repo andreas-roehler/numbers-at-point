@@ -368,7 +368,7 @@
                (save-excursion
                  (and
                   (end-of-form-base (char-to-string (char-after)) (char-to-string (char-after)) upper-bound t 0 nil nil nil match-in-comment match-in-string)
-                  (< orig (point))
+                  (<= orig (point))
                   (setq delimited-end (list (match-beginning 0) (match-end 0)))))
                )
           ;; )
@@ -432,15 +432,17 @@
        (let ((orig (point))
              (begdel (concat th-beg-delimiter ar-delimiters-atpt))
              (erg (or
-                   (ar-th-end 'delimited no-delimiters)
+                   (ar-th-end 'delimited)
                    (unless (looking-at (concat "[" begdel "]"))
-                     (setq erg (funcall (get 'delimited 'beginning-op-at))))
-                   (when (car-safe erg) (goto-char (car-safe erg)))
-                   (if (looking-at (concat "[" begdel "]"))
-                       (end-of-form-base (char-to-string (char-after)) (char-to-string (ar--return-complement-char-maybe (char-after))) nil 'move 0 t 'ar-syntax 'forward)
-                     (skip-chars-forward (concat "^" th-beg-delimiter ar-delimiters-atpt))
-                     (when (looking-at (concat "[" th-beg-delimiter ar-delimiters-atpt "]"))
-                       (list (match-beginning 0) (match-end 0))))))))))
+                     (setq erg (funcall (get 'delimited 'beginning-op-at)))))))
+         (if
+             erg
+             (goto-char erg)
+           (if (looking-at (concat "[" begdel "]"))
+               (end-of-form-base (char-to-string (char-after)) (char-to-string (ar--return-complement-char-maybe (char-after))) nil 'move 0 t 'ar-syntax 'forward)
+             (skip-chars-forward (concat "^" th-beg-delimiter ar-delimiters-atpt))
+             (when (looking-at (concat "[" th-beg-delimiter ar-delimiters-atpt "]"))
+               (list (match-beginning 0) (match-end 0))))))))
 
 (put 'delimited 'backward-op-at
      (lambda ()
@@ -1660,14 +1662,15 @@ If optional positions BEG-2TH END-2TH are given, works on them instead. "
 	(when (numberp inner-end) (goto-char inner-end))
 	(while
 	    (and
-             (not stop)
+             (not stop) (not (and (eobp) (eq 'char thing-1th)))
              (or (not done) (< last (point)))
 	     (prog1 (setq last (point))
                (funcall th-function thing-1th))
 	     (setq done t))
-	  (unless (or (and (eobp) (setq stop t)) (eq 'char thing-1th))
-
-            (setq inner-end (ar-th-forward thing-1th 1))))))))
+	  ;; (unless (or (and (eobp) (setq stop t)) (eq 'char thing-1th))w
+	  (unless (eq 'char thing-1th)
+            (unless (setq inner-end (ar-th-forward thing-1th 1))
+              (setq stop t))))))))
 
 (defun ar-th-kill (thing &optional no-delimiters)
   " "
@@ -1796,7 +1799,8 @@ Move backward with negative argument "
         (progn
           (funcall (get thing 'forward-op-at))
           (and (< orig (point)) (point)))
-      (funcall (get thing 'backward-op-at))
+      (and (funcall (get thing 'backward-op-at))
+           (< (point) orig)(point))
       )))
 
 (defun ar-th-un-ml (thing &optional beg end)
