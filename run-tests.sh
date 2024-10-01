@@ -152,7 +152,7 @@ if [ $IFLOCAL -eq 0 ]; then
     cp -pu ${WCO}/ar-thingatpt-basic-definitions.el .
     cp -pu ${WCO}/ar-thingatpt-utils-core.el .
     cp -pu ${ATPT}/ar-thingatpt-utils.el .
-    cp -pu ${WCO}/test/ar-thingatpt-setup-tests.el .
+    cp -pu ${WCO}/test/ar-thingatpt-setup-tests.el test/.
 
     while getopts 123456789abcdefghijklmnopqrstuvx option
     do

@@ -1,4 +1,7 @@
-Numbers at point [![Build Status](https://travis-ci.org/andreas-roehler/numbers-at-point.svg?branch=master)](https://travis-ci.org/andreas-roehler/numbers-at-point)
+# Numbers at point
+
+[![CircleCI numbers-at-point](https://circleci.com/gh/andreas-roehler/numbers-at-point.svg?style=svg)](https://app.circleci.com/pipelines/gh/andreas-roehler/numbers-at-point)
+
 ===
 
 # integers-at-point
