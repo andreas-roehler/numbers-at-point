@@ -1,0 +1,48 @@
+version: 2.1
+
+aktion:
+  echo "Gebe Umgebung aus"
+  ls -lart
+
+jobs:
+  napmode:
+    docker:
+      # - image: ubuntu-2004:202010-01
+      - image: silex/emacs:27.2
+    working_directory: ~/numbers-at-point
+    steps:
+      - run: apt update && apt install -y git ssh emacs
+      - checkout
+      - run:
+          name: Umgebung
+          command:
+            echo "Gebe Umgebung aus"; ls -lart
+
+      - run:
+          name: ERT tests
+          command: |
+            emacs -Q --batch \
+            --eval "(message (emacs-version))" \
+            --eval "(message (getenv \"PWD\"))" \
+            --eval "(setq numbers-at-point-debug nil)" \
+            --eval "(setq python-indent-offset 4)" \
+            --eval "(setq python-indent-guess-indent-offset nil)" \
+            --eval "(setq python-indent-guess-indent-offset-verbose nil)" \
+            --eval "(load \"/root/numbers-at-point/numbers-at-point.el\")" \
+            --eval "(load \"/root/numbers-at-point/ar-subr.el\")" \
+            --eval "(load \"/root/numbers-at-point/ar-beg-end.el\")" \
+            --eval "(load \"/root/numbers-at-point/ar-thingatpt-basic-definitions.el\")" \
+            --eval "(load \"/root/numbers-at-point/ar-thingatpt-utils-core.el\")" \
+            --eval "(load \"/root/numbers-at-point/ar-thingatpt-utils.el\")" \
+            --eval "(load \"/root/numbers-at-point/test/ar-thingatpt-setup-tests.el\")" \
+            --eval "(load \"/root/numbers-at-point/test/ar-numbers-at-point-tests.el\")" \
+            --eval "(load \"/root/numbers-at-point/test/ar-alphabetical-at-point-tests.el\")" \
+            --eval "(sit-for 1)" \
+            -f ert-run-tests-batch-and-exit
+
+
+
+workflows:
+  napmode-workflow:
+    jobs:
+      - napmode
