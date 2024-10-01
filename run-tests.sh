@@ -138,17 +138,21 @@ entfernt () {
 
 if [ $IFLOCAL -eq 0 ]; then
 
-    WGE=$HOME/werkstatt/emacs-generics
+    GEN=$HOME/werkstatt/emacs-generics
     WCO=$HOME/werkstatt/thingatpt-utils-core
     ATPT=$HOME/werkstatt/thing-at-point-utils
     WNA=$HOME/werkstatt/numbers-at-point
 
-    cp -p ${WGE}/ar-subr.el .
-    cp -p ${WGE}/ar-beg-end.el .
-    cp -p ${WCO}/ar-thingatpt-basic-definitions.el .
-    cp -p ${WCO}/ar-thingatpt-utils-core.el .
-    cp -p ${ATPT}/ar-thingatpt-utils.el .
-    cp -p ${WCO}/test/ar-thingatpt-setup-tests.el .
+    cp -pu ${GEN}/ar-subr.el .
+    cp -pu ${GEN}/ar-beg-end.el .
+    cp -pu ${GEN}/ar-emacs-generics-start-Zf98zM.el .
+    cp -pu ${GEN}/ar-navigate.el .
+    cp -pu ${GEN}/ar-emacs-generics-backward-forms.el .
+    cp -pu ${GEN}/ar-emacs-generics-forward-forms.el .
+    cp -pu ${WCO}/ar-thingatpt-basic-definitions.el .
+    cp -pu ${WCO}/ar-thingatpt-utils-core.el .
+    cp -pu ${ATPT}/ar-thingatpt-utils.el .
+    cp -pu ${WCO}/test/ar-thingatpt-setup-tests.el .
 
     while getopts 123456789abcdefghijklmnopqrstuvx option
     do
