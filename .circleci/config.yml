@@ -28,7 +28,7 @@ jobs:
             --eval "(setq python-indent-offset 4)" \
             --eval "(setq python-indent-guess-indent-offset nil)" \
             --eval "(setq python-indent-guess-indent-offset-verbose nil)" \
-            --eval "(load \"/root/numbers-at-point/numbers-at-point.el\")" \
+            --eval "(load \"/root/numbers-at-point/ar-numbers-at-point.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-subr.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-beg-end.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-thingatpt-basic-definitions.el\")" \
