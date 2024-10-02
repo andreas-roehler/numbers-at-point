@@ -28,19 +28,18 @@ jobs:
             --eval "(setq python-indent-offset 4)" \
             --eval "(setq python-indent-guess-indent-offset nil)" \
             --eval "(setq python-indent-guess-indent-offset-verbose nil)" \
-            --eval "(load \"/root/numbers-at-point/ar-numbers-at-point.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-subr.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-beg-end.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-thingatpt-basic-definitions.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-thingatpt-utils-core.el\")" \
             --eval "(load \"/root/numbers-at-point/ar-thingatpt-utils.el\")" \
+            --eval "(load \"/root/numbers-at-point/ar-numbers-at-point.el\")" \
             --eval "(load \"/root/numbers-at-point/test/ar-thingatpt-setup-tests.el\")" \
             --eval "(load \"/root/numbers-at-point/test/ar-numbers-at-point-tests.el\")" \
             --eval "(load \"/root/numbers-at-point/test/ar-alphabetical-at-point-tests.el\")" \
-            --eval "(sit-for 1)" \
-            -f ert-run-tests-batch-and-exit
 
-
+             --eval "(sit-for 1)" \
+             -f ert-run-tests-batch-and-exit
 
 workflows:
   napmode-workflow:
