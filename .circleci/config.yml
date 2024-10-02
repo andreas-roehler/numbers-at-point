@@ -37,7 +37,6 @@ jobs:
             --eval "(load \"/root/numbers-at-point/test/ar-thingatpt-setup-tests.el\")" \
             --eval "(load \"/root/numbers-at-point/test/ar-numbers-at-point-tests.el\")" \
             --eval "(load \"/root/numbers-at-point/test/ar-alphabetical-at-point-tests.el\")" \
-
              --eval "(sit-for 1)" \
              -f ert-run-tests-batch-and-exit
 
